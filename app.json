@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Freedwise Reader",
+    "slug": "freedwise-reader",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ECEDE8"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.freedwise.reader",
+      "infoPlist": {
+        "UIFileSharingEnabled": true,
+        "LSSupportsOpeningDocumentsInPlace": true,
+        "UISupportsDocumentBrowser": true,
+        "NSDocumentsFolderUsageDescription": "Freedwise Reader needs access to your files to import PDF and EPUB books.",
+        "NSUserNotificationsUsageDescription": "Freedwise Reader sends daily reminders when you have highlights due for review."
+      }
+    },
+    "android": {
+      "package": "com.freedwise.reader",
+      "adaptiveIcon": {
+        "backgroundColor": "#ECEDE8",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "usesCleartextTraffic": false,
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-notifications"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "98ba0590-ae52-4015-a2a4-cce33600aa2a"
+      }
+    },
+    "owner": "thismart595"
+  }
+}
