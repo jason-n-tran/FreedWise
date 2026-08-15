@@ -1,0 +1,156 @@
+/* Freedwise extraction runtime — runs INSIDE the hidden ExtractionWebView.
+ *
+ * Loaded after jszip + pdf.min + epub.min. Listens for an 'extract' request and
+ * replies with metadata + a base64 PNG cover. Protocol:
+ *   RN -> WV: { type: 'extract', id, uri, kind }
+ *   WV -> RN: { type: 'extractResult', id, ok, title, author, pageCount, coverPngBase64 }
+ *             { type: 'extractResult', id, ok:false, error }
+ */
+(function () {
+  'use strict';
+
+  function post(msg) {
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify(msg));
+    }
+  }
+
+  function extractPdf(id, uri) {
+    if (typeof pdfjsLib === 'undefined') {
+      post({ type: 'extractResult', id: id, ok: false, error: 'pdfjsLib missing' });
+      return;
+    }
+    pdfjsLib.GlobalWorkerOptions.workerSrc = window.__PDF_WORKER_URI__ || '';
+    pdfjsLib
+      .getDocument({ url: uri })
+      .promise.then(function (doc) {
+        var meta = { title: undefined, author: undefined };
+        return doc.getMetadata().then(
+          function (m) {
+            if (m && m.info) {
+              meta.title = m.info.Title || undefined;
+              meta.author = m.info.Author || undefined;
+            }
+            return doc.getPage(1).then(function (page) {
+              var viewport = page.getViewport({ scale: 1.0 });
+              var scale = Math.min(1, 600 / viewport.width);
+              var vp = page.getViewport({ scale: scale });
+              var canvas = document.createElement('canvas');
+              canvas.width = vp.width;
+              canvas.height = vp.height;
+              return page
+                .render({ canvasContext: canvas.getContext('2d'), viewport: vp })
+                .promise.then(function () {
+                  var dataUrl = canvas.toDataURL('image/png');
+                  post({
+                    type: 'extractResult',
+                    id: id,
+                    ok: true,
+                    title: meta.title,
+                    author: meta.author,
+                    pageCount: doc.numPages,
+                    coverPngBase64: dataUrl.split(',')[1] || '',
+                  });
+                });
+            });
+          },
+          function () {
+            post({
+              type: 'extractResult',
+              id: id,
+              ok: true,
+              pageCount: doc.numPages,
+            });
+          }
+        );
+      })
+      .catch(function (err) {
+        post({
+          type: 'extractResult',
+          id: id,
+          ok: false,
+          error: (err && err.message) || 'pdf extract failed',
+        });
+      });
+  }
+
+  function extractEpub(id, uri) {
+    if (typeof ePub === 'undefined') {
+      post({ type: 'extractResult', id: id, ok: false, error: 'ePub missing' });
+      return;
+    }
+    try {
+      var book = ePub(uri);
+      book.loaded.metadata
+        .then(function (meta) {
+          return book.coverUrl().then(function (coverUrl) {
+            if (!coverUrl) {
+              post({
+                type: 'extractResult',
+                id: id,
+                ok: true,
+                title: meta.title,
+                author: meta.creator,
+              });
+              return;
+            }
+            return fetch(coverUrl)
+              .then(function (r) {
+                return r.blob();
+              })
+              .then(function (blob) {
+                var reader = new FileReader();
+                reader.onloadend = function () {
+                  var b64 = (reader.result || '').toString().split(',')[1] || '';
+                  post({
+                    type: 'extractResult',
+                    id: id,
+                    ok: true,
+                    title: meta.title,
+                    author: meta.creator,
+                    coverPngBase64: b64,
+                  });
+                };
+                reader.readAsDataURL(blob);
+              });
+          });
+        })
+        .catch(function (err) {
+          post({
+            type: 'extractResult',
+            id: id,
+            ok: false,
+            error: (err && err.message) || 'epub extract failed',
+          });
+        });
+    } catch (err) {
+      post({
+        type: 'extractResult',
+        id: id,
+        ok: false,
+        error: (err && err.message) || 'epub extract crashed',
+      });
+    }
+  }
+
+  function handle(raw) {
+    var data;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      return;
+    }
+    if (data.type !== 'extract') return;
+    if (data.kind === 'pdf') extractPdf(data.id, data.uri);
+    else extractEpub(data.id, data.uri);
+  }
+
+  document.addEventListener('message', function (e) {
+    handle(e.data);
+  });
+  window.addEventListener('message', function (e) {
+    handle(e.data);
+  });
+
+  post({ type: 'extractReady' });
+})();
