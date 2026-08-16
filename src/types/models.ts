@@ -38,3 +38,68 @@ export interface HighlightPosition {
   chapterTitle?: string;
   locator?: PDFLocator; // For PDF precise re-anchoring (additive, optional)
 }
+
+export interface Tag {
+  id: string;
+  name: string;
+  createdAt: Date;
+}
+
+export interface Highlight {
+  id: string;
+  bookId: string;
+  text: string;
+  note?: string;
+  tags: Tag[];
+  position: HighlightPosition;
+  color: string;
+  createdAt: Date;
+  updatedAt: Date;
+
+  // FSRS parameters
+  dueDate: Date;
+  stability: number;
+  difficulty: number;
+  elapsedDays: number;
+  scheduledDays: number;
+  reps: number;
+  lapses: number;
+  state: CardState;
+  lastReviewedAt?: Date;
+
+  // Action tags
+  isFlashcard: boolean; // .q tag
+  flashcardQuestion?: string;
+  isDiscarded: boolean; // .discard tag
+  headerLevel?: number; // .h1, .h2, etc.
+}
+
+export interface ReviewLog {
+  id: string;
+  highlightId: string;
+  grade: Grade;
+  reviewedAt: Date;
+  elapsedDays: number;
+  scheduledDays: number;
+  state: CardState;
+}
+
+export interface FSRSCard {
+  stability: number;
+  difficulty: number;
+  elapsedDays: number;
+  scheduledDays: number;
+  reps: number;
+  lapses: number;
+  state: CardState;
+  lastReview?: Date;
+}
+
+export interface ReadingProgress {
+  bookId: string;
+  currentPage: number;
+  totalPages: number;
+  percentage: number;
+  lastPosition?: string; // For EPUB CFI
+  lastCfi?: string; // For EPUB CFI restore
+}
