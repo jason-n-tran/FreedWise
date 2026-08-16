@@ -91,3 +91,61 @@ export const markerInks = {
   pink: '#F7B2C8',
   orange: '#FFC487',
 } as const;
+
+export const fonts = {
+  // UI / display — Space Grotesk
+  display: 'SpaceGrotesk_700Bold',
+  displayMedium: 'SpaceGrotesk_500Medium',
+  ui: 'SpaceGrotesk_400Regular',
+  uiMedium: 'SpaceGrotesk_500Medium',
+  // Data, labels, counts, dates — Space Mono
+  mono: 'SpaceMono_400Regular',
+  monoBold: 'SpaceMono_700Bold',
+  // The book's voice — Newsreader (quoted passages ONLY)
+  serif: 'Newsreader_400Regular',
+  serifMedium: 'Newsreader_500Medium',
+  serifItalic: 'Newsreader_400Regular_Italic',
+} as const;
+
+// Type scale. Sizes are intentionally a little oversized at the top end and
+// tightly tracked, so the grotesk reads as a masthead rather than chrome.
+export const type = {
+  hero: { fontFamily: fonts.display, fontSize: 40, lineHeight: 42, letterSpacing: -1.2 },
+  title: { fontFamily: fonts.display, fontSize: 26, lineHeight: 30, letterSpacing: -0.6 },
+  heading: { fontFamily: fonts.displayMedium, fontSize: 18, lineHeight: 24, letterSpacing: -0.2 },
+  body: { fontFamily: fonts.ui, fontSize: 15, lineHeight: 22 },
+  bodyStrong: { fontFamily: fonts.uiMedium, fontSize: 15, lineHeight: 22 },
+  // Monospace eyebrow used everywhere as the "instrument readout".
+  eyebrow: {
+    fontFamily: fonts.mono,
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase' as const,
+  },
+  label: { fontFamily: fonts.mono, fontSize: 12, lineHeight: 16, letterSpacing: 0.5 },
+  data: { fontFamily: fonts.monoBold, fontSize: 13, lineHeight: 16, letterSpacing: 0.5 },
+  // Big numeric readouts (due counts, retention %).
+  readout: { fontFamily: fonts.monoBold, fontSize: 44, lineHeight: 46, letterSpacing: -1 },
+  // Quoted book prose.
+  quote: { fontFamily: fonts.serif, fontSize: 18, lineHeight: 28 },
+  quoteLarge: { fontFamily: fonts.serif, fontSize: 22, lineHeight: 32 },
+  note: { fontFamily: fonts.serifItalic, fontSize: 15, lineHeight: 23 },
+} as const;
+
+export const space = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  xxl: 32,
+} as const;
+
+// Hard-edged by default. The whole system avoids the soft iOS card; corners are
+// crisp and surfaces are defined by ink borders, not shadows.
+export const radius = {
+  none: 0,
+  sm: 2,
+  md: 4,
+} as const;
