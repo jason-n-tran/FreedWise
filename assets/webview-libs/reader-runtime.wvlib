@@ -1,0 +1,684 @@
+/* Freedwise reader runtime — runs INSIDE the WebView.
+ *
+ * Loaded after the vendored libs (pdf.min.js / epub.min.js + jszip) by the
+ * generated reader HTML page. On load it posts `runtimeLoaded`; RN replies with
+ * an `init` message ({kind, bookUri, workerUri, startPage}) that selects and
+ * starts the pdf|epub reader. (We do NOT read injected globals — their timing
+ * is unreliable on Android.)
+ *
+ * Protocol (matches the React Native side in WebViewReader.tsx):
+ *   WV -> RN  window.ReactNativeWebView.postMessage(JSON):
+ *     { type: 'ready' }
+ *     { type: 'rendered' }
+ *     { type: 'progress', ... }
+ *     { type: 'selection', text, position, boundingRect }
+ *     { type: 'highlightTap', highlightId }
+ *     { type: 'error', message }
+ *   RN -> WV  (document 'message' event, JSON):
+ *     { type: 'applyHighlight', highlightId, position, color }
+ *     { type: 'removeHighlight', highlightId }
+ *     { type: 'rehydrateHighlights', highlights: [...] }
+ *     { type: 'goToHighlight', highlightId }
+ */
+(function () {
+  'use strict';
+
+  // These are populated by the explicit `init` message from RN (see bottom),
+  // NOT by injected globals — injectedJavaScriptBeforeContentLoaded does not
+  // reliably run before this script on Android, which caused the runtime to read
+  // an undefined kind, default to 'pdf', and run the PDF branch on EPUB pages
+  // ("pdfjsLib not loaded"). Waiting for init removes that race entirely.
+  var KIND = '';
+  var BOOK_URI = '';
+  var START_PAGE = 1;
+  var START_CFI = ''; // EPUB: CFI of last read position for restore
+  var WORKER_URI = '';
+  var IS_DARK = false;
+  var BG = '#ECEDE8';
+  var FG = '#17181C';
+  var FONT_SCALE = 1.0;
+  var EPUB_FLOW = 'paginated';
+  var initialized = false;
+
+  function post(msg) {
+    if (window.ReactNativeWebView) {
+      window.ReactNativeWebView.postMessage(JSON.stringify(msg));
+    }
+  }
+  function postError(message, err) {
+    post({ type: 'error', message: message + (err ? ': ' + err : '') });
+  }
+
+  // FNV-1a 32-bit, must match src/utils/pdfLocator.ts hashText.
+  function hashText(text) {
+    var n = (text || '').replace(/\s+/g, ' ').trim();
+    var h = 0x811c9dc5;
+    for (var i = 0; i < n.length; i++) {
+      h ^= n.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    var hex = h.toString(16);
+    while (hex.length < 8) hex = '0' + hex;
+    return hex;
+  }
+
+  // ---- PDF reader ---------------------------------------------------------
+  function initPdf() {
+    if (typeof pdfjsLib === 'undefined') {
+      postError('pdfjsLib not loaded');
+      return;
+    }
+    pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER_URI || '';
+
+    var container = document.getElementById('viewer');
+    container.style.backgroundColor = BG;
+    // Dark mode: invert the rendered page canvases so a white PDF reads dark.
+    // The text/highlight layers sit above and are unaffected (transparent).
+    if (IS_DARK) {
+      container.classList.add('fw-dark');
+    }
+    var pdfDoc = null;
+    var pageViewports = {}; // pageNumber -> {width,height,cssScale}
+    var highlightsByPage = {}; // pageNumber -> [{highlightId,color,quads}]
+    var highlightPageById = {}; // highlightId -> pageNumber
+    var pageShells = {}; // pageNumber -> lightweight DOM shell + PDF page
+
+    // No fixed scale — each page is rendered at fit-to-width so it always fills
+    // the container without horizontal overflow, regardless of the PDF's native
+    // point dimensions. We render at CSS pixel size (not physical pixels) so the
+    // browser composites to the device's native resolution automatically.
+    // Multiplying by devicePixelRatio would triple canvas memory and render time
+    // on high-DPI phones (DPR=3) for no perceivable quality gain on small screens.
+    function getFitScale(page) {
+      var naturalVp = page.getViewport({ scale: 1 });
+      var containerW = container.clientWidth || window.innerWidth || 360;
+      return containerW / naturalVp.width;
+    }
+
+    // Pages mode (tap-to-flip, one page at a time) vs. continuous scroll. Shares
+    // the single reading-mode setting with EPUB. PDFs are discrete .page divs, so
+    // paginating is just showing one and hiding the rest.
+    var pdfPaginated = EPUB_FLOW !== 'scrolled';
+    var currentPdfPage = START_PAGE;
+
+    function showPdfPage(num) {
+      if (num < 1) num = 1;
+      if (pdfDoc && num > pdfDoc.numPages) num = pdfDoc.numPages;
+      currentPdfPage = num;
+      var pages = container.querySelectorAll('.page');
+      for (var i = 0; i < pages.length; i++) {
+        var p = pages[i];
+        p.style.display = parseInt(p.getAttribute('data-page'), 10) === num ? 'block' : 'none';
+      }
+      container.scrollTop = 0;
+      post({ type: 'progress', pdf: { page: num } });
+    }
+
+    function ensurePageShell(num) {
+      if (pageShells[num]) return Promise.resolve(pageShells[num]);
+      return pdfDoc.getPage(num).then(function (page) {
+        var fitScale = getFitScale(page);
+        var viewport = page.getViewport({ scale: fitScale });
+        pageViewports[num] = { width: viewport.width, height: viewport.height };
+
+        var pageDiv = document.createElement('div');
+        pageDiv.className = 'page';
+        pageDiv.setAttribute('data-page', String(num));
+        pageDiv.style.width = viewport.width + 'px';
+        pageDiv.style.height = viewport.height + 'px';
+        // --scale-factor aligns the text-layer spans to the canvas.
+        pageDiv.style.setProperty('--scale-factor', String(fitScale));
+        // In paginated mode all pages start hidden; we show START_PAGE the
+        // instant its own render finishes so the user never sees scroll-through.
+        if (pdfPaginated) pageDiv.style.display = 'none';
+
+        var canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        pageDiv.appendChild(canvas);
+
+        var textLayer = document.createElement('div');
+        textLayer.className = 'textLayer';
+        pageDiv.appendChild(textLayer);
+
+        var hlLayer = document.createElement('div');
+        hlLayer.className = 'hlLayer';
+        hlLayer.setAttribute('data-hl-page', String(num));
+        pageDiv.appendChild(hlLayer);
+
+        var inserted = false;
+        var pages = container.querySelectorAll('.page');
+        for (var i = 0; i < pages.length; i++) {
+          var existingNum = parseInt(pages[i].getAttribute('data-page'), 10);
+          if (existingNum > num) {
+            container.insertBefore(pageDiv, pages[i]);
+            inserted = true;
+            break;
+          }
+        }
+        if (!inserted) container.appendChild(pageDiv);
+
+        pageShells[num] = {
+          page: page,
+          viewport: viewport,
+          pageDiv: pageDiv,
+          canvas: canvas,
+          textLayer: textLayer,
+          rendered: false,
+        };
+        return pageShells[num];
+      });
+    }
+
+    function renderPage(num) {
+      return ensurePageShell(num).then(function (shell) {
+        if (shell.rendered) return;
+        var renderTask = shell.page.render({
+          canvasContext: shell.canvas.getContext('2d'),
+          viewport: shell.viewport,
+        });
+        return renderTask.promise
+          .then(function () {
+            return shell.page.getTextContent();
+          })
+          .then(function (textContent) {
+            pdfjsLib.renderTextLayer({
+              textContent: textContent,
+              container: shell.textLayer,
+              viewport: shell.viewport,
+              textDivs: [],
+            });
+            shell.rendered = true;
+            drawPageHighlights(num);
+            // In paginated mode: show the start page the moment it is ready
+            // so the user sees their page immediately without waiting for all
+            // pages to render. Also fire an initial progress event here.
+            if (pdfPaginated && num === START_PAGE) {
+              shell.pageDiv.style.display = 'block';
+              container.scrollTop = 0;
+              post({ type: 'progress', pdf: { page: START_PAGE } });
+            }
+          });
+      });
+    }
+
+    function createShellsThrough(endPage) {
+      var last = pdfDoc ? pdfDoc.numPages : endPage;
+      var end = Math.max(1, Math.min(endPage, last));
+      var chain = Promise.resolve();
+      for (var n = 1; n <= end; n++) {
+        (function (num) {
+          chain = chain.then(function () {
+            return ensurePageShell(num);
+          });
+        })(n);
+      }
+      return chain;
+    }
+
+    function createAllShells() {
+      return createShellsThrough(pdfDoc ? pdfDoc.numPages : 1);
+    }
+
+    function renderAllPagesPriority() {
+      var order = [];
+      var total = pdfDoc ? pdfDoc.numPages : 0;
+      if (START_PAGE >= 1 && START_PAGE <= total) order.push(START_PAGE);
+      for (var n = 1; n <= total; n++) {
+        if (n !== START_PAGE) order.push(n);
+      }
+      var chain = Promise.resolve();
+      order.forEach(function (num) {
+        chain = chain.then(function () {
+          return renderPage(num);
+        });
+      });
+      return chain;
+    }
+
+    function drawPageHighlights(num) {
+      var hlLayer = container.querySelector('.hlLayer[data-hl-page="' + num + '"]');
+      if (!hlLayer) return;
+      var vp = pageViewports[num];
+      var list = highlightsByPage[num] || [];
+      hlLayer.innerHTML = '';
+      list.forEach(function (h) {
+        (h.quads || []).forEach(function (q) {
+          var rect = document.createElement('div');
+          rect.className = 'hl';
+          rect.style.position = 'absolute';
+          rect.style.left = q.x * vp.width + 'px';
+          rect.style.top = q.y * vp.height + 'px';
+          rect.style.width = q.width * vp.width + 'px';
+          rect.style.height = q.height * vp.height + 'px';
+          rect.style.backgroundColor = h.color || '#FFEB3B';
+          rect.style.opacity = '0.35';
+          rect.setAttribute('data-hl-id', h.highlightId);
+          rect.addEventListener('click', function () {
+            post({ type: 'highlightTap', highlightId: h.highlightId });
+          });
+          hlLayer.appendChild(rect);
+        });
+      });
+    }
+
+    function currentPageInView() {
+      var pages = container.querySelectorAll('.page');
+      var mid = container.scrollTop + container.clientHeight / 2;
+      for (var i = 0; i < pages.length; i++) {
+        var p = pages[i];
+        if (p.offsetTop <= mid && p.offsetTop + p.offsetHeight >= mid) {
+          return parseInt(p.getAttribute('data-page'), 10);
+        }
+      }
+      return 1;
+    }
+
+    function onSelection() {
+      var sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.toString().trim()) return;
+      var range = sel.getRangeAt(0);
+      var pageEl = findPageEl(range.startContainer);
+      if (!pageEl) return;
+      var num = parseInt(pageEl.getAttribute('data-page'), 10);
+      var vp = pageViewports[num];
+      var pageRect = pageEl.getBoundingClientRect();
+      var rects = [];
+      var clientRects = range.getClientRects();
+      for (var i = 0; i < clientRects.length; i++) {
+        var r = clientRects[i];
+        rects.push({
+          x: r.left - pageRect.left,
+          y: r.top - pageRect.top,
+          width: r.width,
+          height: r.height,
+        });
+      }
+      var quads = rects.map(function (r) {
+        return {
+          x: clamp01(r.x / vp.width),
+          y: clamp01(r.y / vp.height),
+          width: clamp01(r.width / vp.width),
+          height: clamp01(r.height / vp.height),
+        };
+      });
+      var text = sel.toString().trim();
+      var first = rects[0] || { x: 0, y: 0, width: 0, height: 0 };
+      post({
+        type: 'selection',
+        text: text,
+        position: {
+          pageNumber: num,
+          locator: { pageNumber: num, quads: quads, textHash: hashText(text) },
+        },
+        boundingRect: first,
+      });
+    }
+
+    function findPageEl(node) {
+      var el = node.nodeType === 1 ? node : node.parentElement;
+      while (el && !el.classList.contains('page')) el = el.parentElement;
+      return el;
+    }
+    function clamp01(n) {
+      if (isNaN(n)) return 0;
+      return n < 0 ? 0 : n > 1 ? 1 : n;
+    }
+
+    pdfjsLib
+      .getDocument({ url: BOOK_URI })
+      .promise.then(function (doc) {
+        pdfDoc = doc;
+        if (START_PAGE < 1) START_PAGE = 1;
+        if (START_PAGE > doc.numPages) START_PAGE = doc.numPages;
+        currentPdfPage = START_PAGE;
+        post({ type: 'ready' });
+        if (pdfPaginated) {
+          return ensurePageShell(START_PAGE)
+            .then(function () {
+              return renderPage(START_PAGE);
+            })
+            .then(function () {
+              showPdfPage(START_PAGE);
+              return createAllShells();
+            })
+            .then(function () {
+              post({ type: 'rendered', totalPages: pdfDoc ? pdfDoc.numPages : 0 });
+              return renderAllPagesPriority();
+            });
+        }
+        return createShellsThrough(START_PAGE)
+          .then(function () {
+            var target = container.querySelector('.page[data-page="' + START_PAGE + '"]');
+            if (target) {
+              container.scrollTop = target.offsetTop;
+              post({ type: 'progress', pdf: { page: START_PAGE } });
+            }
+            return renderPage(START_PAGE);
+          })
+          .then(function () {
+            return createAllShells();
+          })
+          .then(function () {
+            post({ type: 'rendered', totalPages: pdfDoc ? pdfDoc.numPages : 0 });
+            return renderAllPagesPriority();
+          });
+      })
+      .then(function () {
+        // Background page rendering is complete. Navigation has already been
+        // applied earlier, so do not jump back to START_PAGE here; a highlight
+        // deep-link may have moved the reader while rendering continued.
+      })
+      .catch(function (err) {
+        postError('PDF load failed', err && err.message);
+      });
+
+    document.addEventListener('mouseup', onSelection);
+    document.addEventListener('touchend', onSelection);
+    if (!pdfPaginated) {
+      container.addEventListener('scroll', function () {
+        post({ type: 'progress', pdf: { page: currentPageInView() } });
+      });
+    }
+
+    window.__readerApi = {
+      flip: function (dir) {
+        if (!pdfPaginated) return;
+        showPdfPage(currentPdfPage + (dir === 'prev' ? -1 : 1));
+      },
+      goToPage: function (pageNumber) {
+        if (pdfPaginated) {
+          showPdfPage(pageNumber);
+        } else {
+          var page = container.querySelector('.page[data-page="' + pageNumber + '"]');
+          if (page) container.scrollTop = page.offsetTop;
+        }
+      },
+      applyHighlight: function (h) {
+        var num = h.position && h.position.locator ? h.position.locator.pageNumber : h.position && h.position.pageNumber;
+        if (!num) return;
+        var quads = h.position && h.position.locator ? h.position.locator.quads : [];
+        highlightPageById[h.highlightId] = num;
+        highlightsByPage[num] = (highlightsByPage[num] || []).filter(function (x) {
+          return x.highlightId !== h.highlightId;
+        });
+        highlightsByPage[num].push({ highlightId: h.highlightId, color: h.color, quads: quads });
+        drawPageHighlights(num);
+      },
+      removeHighlight: function (id) {
+        delete highlightPageById[id];
+        Object.keys(highlightsByPage).forEach(function (num) {
+          highlightsByPage[num] = highlightsByPage[num].filter(function (x) {
+            return x.highlightId !== id;
+          });
+          drawPageHighlights(parseInt(num, 10));
+        });
+      },
+      goToHighlight: function (id, pageNumber) {
+        var targetPage = pageNumber || highlightPageById[id];
+        // In paginated mode: show the target page so the whole page is visible.
+        // We do NOT try to scrollIntoView because (a) the whole page fits the
+        // screen, so it's already fully visible, and (b) the hl rect may not
+        // have been drawn yet if rehydration is still in flight.
+        if (pdfPaginated && targetPage) {
+          showPdfPage(targetPage);
+          return;
+        }
+        // Scroll mode: try to scroll to the specific highlight rect.
+        var el = container.querySelector('[data-hl-id="' + id + '"]');
+        if (el) {
+          el.scrollIntoView({ block: 'center' });
+          el.style.outline = '2px solid #FF9800';
+          setTimeout(function () {
+            el.style.outline = '';
+          }, 2000);
+          return;
+        }
+        // Fallback: scroll to the page.
+        if (targetPage) {
+          var pg = container.querySelector('.page[data-page="' + targetPage + '"]');
+          if (pg) container.scrollTop = pg.offsetTop;
+        }
+      },
+    };
+  }
+
+  // ---- EPUB reader --------------------------------------------------------
+  function initEpub() {
+    if (typeof ePub === 'undefined') {
+      postError('ePub not loaded');
+      return;
+    }
+    var book = ePub(BOOK_URI);
+    // Two reading modes (user setting):
+    //  - 'paginated': fixed pages, tap left/right thirds to flip (default).
+    //  - 'scrolled': one continuous scroll (manager:'continuous'), loads
+    //    sections on demand.
+    var paginated = EPUB_FLOW !== 'scrolled';
+    var rendition = book.renderTo(
+      'viewer',
+      paginated
+        ? { width: '100%', height: '100%', flow: 'paginated', manager: 'default', spread: 'none' }
+        : { width: '100%', height: '100%', flow: 'scrolled', manager: 'continuous', snap: false }
+    );
+
+    // Theme + font size applied via epub.js themes (re-applies to every section).
+    function registerThemes() {
+      rendition.themes.register('fw', {
+        body: { color: FG + ' !important', background: BG + ' !important' },
+        p: { color: FG + ' !important' },
+        a: { color: (IS_DARK ? '#9DB0FF' : '#2B2BF5') + ' !important' },
+      });
+      rendition.themes.select('fw');
+      rendition.themes.fontSize(Math.round(FONT_SCALE * 100) + '%');
+    }
+    registerThemes();
+
+    rendition
+      .display(START_CFI || undefined)
+      .then(function () {
+        post({ type: 'ready' });
+        post({ type: 'rendered' });
+        // Generate locations in background for percentage navigation
+        return book.locations.generate(600);
+      })
+      .then(function () {
+        // Send initial page total once locations are computed
+        var cur = rendition.currentLocation();
+        if (cur && cur.start) {
+          post({
+            type: 'progress',
+            epub: {
+              cfi: cur.start.cfi,
+              percentage: cur.start.percentage,
+              page: book.locations.locationFromCfi(cur.start.cfi) + 1,
+              total: book.locations.length()
+            }
+          });
+        }
+      })
+      .catch(function (err) {
+        postError('EPUB display failed', err && err.message);
+      });
+
+    // Tap-to-flip is driven by NATIVE RN overlays (see WebViewReader), not by
+    // listeners inside the WebView. In-WebView overlays don't work: Android's
+    // pinch-zoom scales/pans the whole WebView content (including position:fixed
+    // elements), so a zoomed-in viewer pans the edge zones off-screen and taps
+    // land on page content instead. RN views sit on the glass in true screen
+    // space, immune to zoom/pan. They post a `flip` message handled below.
+
+    rendition.on('selected', function (cfiRange, contents) {
+      book.getRange(cfiRange).then(function (range) {
+        var text = range ? range.toString() : '';
+        var rect = { x: 0, y: 0, width: 0, height: 0 };
+        try {
+          var r = range.getBoundingClientRect();
+          rect = { x: r.left, y: r.top, width: r.width, height: r.height };
+        } catch (e) {}
+        post({
+          type: 'selection',
+          text: text,
+          position: { cfi: cfiRange },
+          boundingRect: rect,
+        });
+      });
+      if (contents && contents.window) {
+        contents.window.getSelection().removeAllRanges();
+      }
+    });
+
+    rendition.on('relocated', function (location) {
+      var progress = {
+        cfi: location.start.cfi,
+        percentage: location.start.percentage,
+      };
+      if (book.locations && book.locations.length() > 0) {
+        progress.page = book.locations.locationFromCfi(location.start.cfi) + 1;
+        progress.total = book.locations.length();
+      }
+      post({
+        type: 'progress',
+        epub: progress,
+      });
+    });
+
+    window.__readerApi = {
+      flip: function (dir) {
+        if (!paginated) return;
+        if (dir === 'prev') rendition.prev();
+        else rendition.next();
+      },
+      goToPage: function (pageNumber, percentage) {
+        if (percentage !== undefined) {
+          if (book.locations && book.locations.length() > 0) {
+            var cfi = book.locations.cfiFromPercentage(percentage);
+            if (cfi) rendition.display(cfi);
+          } else {
+            rendition.display(percentage);
+          }
+        }
+      },
+      applyHighlight: function (h) {
+        var cfi = h.position && h.position.cfi;
+        if (!cfi) return;
+        try {
+          rendition.annotations.highlight(
+            cfi,
+            { highlightId: h.highlightId },
+            function () {
+              post({ type: 'highlightTap', highlightId: h.highlightId });
+            },
+            'hl-' + h.highlightId,
+            { fill: h.color || '#FFEB3B' }
+          );
+        } catch (e) {
+          postError('applyHighlight failed', e && e.message);
+        }
+      },
+      removeHighlight: function (id) {
+        // epub.js removes by cfi; the RN side passes cfi via a lookup map, but
+        // we also expose remove-by-cfi for direct calls.
+        if (id && id.indexOf('epubcfi') === 0) {
+          try {
+            rendition.annotations.remove(id, 'highlight');
+          } catch (e) {}
+        }
+      },
+      goToHighlight: function (cfi) {
+        if (cfi) rendition.display(cfi);
+      },
+      applyTheme: function () {
+        registerThemes();
+      },
+    };
+  }
+
+  // ---- RN -> WV message handling -----------------------------------------
+  function startReader() {
+    if (initialized) return;
+    initialized = true;
+    try {
+      if (KIND === 'epub') initEpub();
+      else initPdf();
+    } catch (err) {
+      postError('reader init crashed', err && err.message);
+    }
+  }
+
+  function handleMessage(raw) {
+    var data;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      return;
+    }
+
+    // The very first message is `init` — it carries kind/book/worker and kicks
+    // off the correct reader. Everything else is post-init highlight control.
+    if (data.type === 'init') {
+      KIND = data.kind || 'pdf';
+      BOOK_URI = data.bookUri || '';
+      WORKER_URI = data.workerUri || '';
+      START_PAGE = data.startPage || 1;
+      START_CFI = data.startCfi || '';
+      IS_DARK = !!data.isDark;
+      if (data.bg) BG = data.bg;
+      if (data.fg) FG = data.fg;
+      if (data.fontScale) FONT_SCALE = data.fontScale;
+      if (data.flow) EPUB_FLOW = data.flow;
+      document.body.style.backgroundColor = BG;
+      startReader();
+      return;
+    }
+
+    // Live theme/setting updates while a reader is open.
+    if (data.type === 'setTheme') {
+      IS_DARK = !!data.isDark;
+      if (data.bg) BG = data.bg;
+      if (data.fg) FG = data.fg;
+      document.body.style.backgroundColor = BG;
+      var api0 = window.__readerApi;
+      if (api0 && api0.applyTheme) api0.applyTheme(IS_DARK, BG, FG);
+      return;
+    }
+
+    var api = window.__readerApi;
+    if (!api) return;
+    switch (data.type) {
+      case 'applyHighlight':
+        api.applyHighlight(data);
+        break;
+      case 'removeHighlight':
+        api.removeHighlight(data.highlightId || data.cfi);
+        break;
+      case 'rehydrateHighlights':
+        (data.highlights || []).forEach(function (h) {
+          api.applyHighlight(h);
+        });
+        break;
+      case 'goToHighlight':
+        api.goToHighlight(data.target || data.highlightId, data.pageNumber);
+        break;
+      case 'goToPage':
+        if (api.goToPage) {
+          api.goToPage(data.pageNumber, data.percentage);
+        }
+        break;
+      case 'flip':
+        if (api.flip) api.flip(data.direction);
+        break;
+    }
+  }
+  // Android posts to document, iOS to window — listen on both.
+  document.addEventListener('message', function (e) {
+    handleMessage(e.data);
+  });
+  window.addEventListener('message', function (e) {
+    handleMessage(e.data);
+  });
+
+  // Tell RN the runtime is loaded and ready to receive `init`. RN replies with
+  // the init message once it sees this (or it may have already queued it).
+  post({ type: 'runtimeLoaded' });
+})();
