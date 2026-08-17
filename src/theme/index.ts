@@ -149,3 +149,22 @@ export const radius = {
   sm: 2,
   md: 4,
 } as const;
+
+export const border = {
+  hair: 1,
+  rule: 1.5,
+  bold: 2,
+} as const;
+
+export const theme = {
+  palette,
+  markerInks,
+  fonts,
+  type,
+  space,
+  radius,
+  border,
+} as const;
+
+export type Theme = typeof theme;
+export default theme;
