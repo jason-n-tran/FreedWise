@@ -52,3 +52,35 @@ export function base64ToBytes(b64: string): Uint8Array {
   }
   return bytes;
 }
+
+export interface Base64Chunk {
+  seq: number;
+  total: number;
+  data: string;
+}
+
+/**
+ * Split bytes into base64-encoded chunks for postMessage delivery. `rawChunkSize`
+ * is the number of raw bytes per chunk (kept a multiple of 3 so each chunk
+ * encodes without '=' padding mid-stream and reassembly is a plain concat).
+ */
+export function chunkBytesToBase64(bytes: Uint8Array, rawChunkSize = 192 * 1024): Base64Chunk[] {
+  // Force a multiple of 3 so chunk boundaries align with base64 triplets.
+  const size = Math.max(3, rawChunkSize - (rawChunkSize % 3));
+  const total = Math.max(1, Math.ceil(bytes.length / size));
+  const chunks: Base64Chunk[] = [];
+  for (let seq = 0; seq < total; seq++) {
+    const slice = bytes.subarray(seq * size, (seq + 1) * size);
+    chunks.push({ seq, total, data: bytesToBase64(slice) });
+  }
+  return chunks;
+}
+
+/**
+ * Reassemble chunks (any order) produced by chunkBytesToBase64 back into bytes.
+ */
+export function assembleBase64Chunks(chunks: Base64Chunk[]): Uint8Array {
+  const ordered = [...chunks].sort((a, b) => a.seq - b.seq);
+  const full = ordered.map(c => c.data).join('');
+  return base64ToBytes(full);
+}
