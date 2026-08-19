@@ -50,3 +50,46 @@ export function denormalizeQuads(quads: PDFLocator['quads'], viewport: PageViewp
     height: q.height * h,
   }));
 }
+
+/**
+ * Deterministic, stable hash of selected text (FNV-1a, 32-bit, hex). Used to
+ * confirm a re-anchored selection still matches the originally highlighted text.
+ * Whitespace is collapsed so trivial reflow differences don't break the match.
+ */
+export function hashText(text: string): string {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < normalized.length; i++) {
+    hash ^= normalized.charCodeAt(i);
+    // 32-bit FNV prime multiply via shifts to stay in integer range
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
+}
+
+/**
+ * Build a complete PDFLocator from a raw WebView selection.
+ */
+export function buildLocator(params: {
+  pageNumber: number;
+  rects: PixelRect[];
+  viewport: PageViewport;
+  text: string;
+  startCharOffset?: number;
+  endCharOffset?: number;
+}): PDFLocator {
+  return {
+    pageNumber: params.pageNumber,
+    quads: normalizeQuads(params.rects, params.viewport),
+    textHash: hashText(params.text),
+    startCharOffset: params.startCharOffset,
+    endCharOffset: params.endCharOffset,
+  };
+}
+
+function clamp01(n: number): number {
+  if (Number.isNaN(n)) return 0;
+  if (n < 0) return 0;
+  if (n > 1) return 1;
+  return n;
+}
