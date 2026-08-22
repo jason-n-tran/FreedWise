@@ -142,3 +142,92 @@ export function validateHighlightPosition(position: HighlightPosition): void {
     throw new ValidationError('Highlight CFI must be non-empty if provided');
   }
 }
+
+// Tag validation (Requirements 9.11, 9.12)
+export function validateTag(tag: Partial<Tag>): void {
+  // Requirement 9.11: name must match pattern: alphanumeric, underscore, hyphen only
+  if (!tag.name || tag.name.trim().length === 0) {
+    throw new ValidationError('Tag name must be non-empty');
+  }
+
+  if (tag.name.length > MAX_TAG_NAME_LENGTH) {
+    throw new ValidationError(`Tag name must be less than ${MAX_TAG_NAME_LENGTH} characters`);
+  }
+
+  if (!TAG_NAME_PATTERN.test(tag.name)) {
+    throw new ValidationError(
+      'Tag name must contain only alphanumeric characters, underscores, and hyphens'
+    );
+  }
+
+  // Requirement 9.12: name must be unique (case-insensitive)
+  // Note: Uniqueness check must be performed at the database/service layer
+}
+
+// ReviewLog validation (Requirement 9.13)
+export function validateReviewLog(log: Partial<ReviewLog>): void {
+  // Requirement 9.13: grade must be one of: 'again', 'hard', 'good', 'easy'
+  if (!log.grade || !VALID_GRADES.includes(log.grade)) {
+    throw new ValidationError(`Review log grade must be one of: ${VALID_GRADES.join(', ')}`);
+  }
+
+  if (log.elapsedDays !== undefined && log.elapsedDays < 0) {
+    throw new ValidationError('Review log elapsed days must be greater than or equal to 0');
+  }
+
+  if (log.scheduledDays !== undefined && log.scheduledDays < 0) {
+    throw new ValidationError('Review log scheduled days must be greater than or equal to 0');
+  }
+
+  if (log.state && !VALID_CARD_STATES.includes(log.state)) {
+    throw new ValidationError(`Review log state must be one of: ${VALID_CARD_STATES.join(', ')}`);
+  }
+}
+
+// FSRSCard validation
+export function validateFSRSCard(card: Partial<FSRSCard>): void {
+  if (card.stability !== undefined && card.stability < 0) {
+    throw new ValidationError('FSRS card stability must be greater than or equal to 0');
+  }
+
+  if (card.difficulty !== undefined) {
+    if (card.difficulty < 0 || card.difficulty > 10) {
+      throw new ValidationError('FSRS card difficulty must be between 0 and 10');
+    }
+  }
+
+  if (card.elapsedDays !== undefined && card.elapsedDays < 0) {
+    throw new ValidationError('FSRS card elapsed days must be greater than or equal to 0');
+  }
+
+  if (card.scheduledDays !== undefined && card.scheduledDays < 0) {
+    throw new ValidationError('FSRS card scheduled days must be greater than or equal to 0');
+  }
+
+  if (card.reps !== undefined && card.reps < 0) {
+    throw new ValidationError('FSRS card reps must be greater than or equal to 0');
+  }
+
+  if (card.lapses !== undefined && card.lapses < 0) {
+    throw new ValidationError('FSRS card lapses must be greater than or equal to 0');
+  }
+
+  if (card.state && !VALID_CARD_STATES.includes(card.state)) {
+    throw new ValidationError(`FSRS card state must be one of: ${VALID_CARD_STATES.join(', ')}`);
+  }
+}
+
+// Helper function to validate grade
+export function validateGrade(grade: string): grade is Grade {
+  return VALID_GRADES.includes(grade as Grade);
+}
+
+// Helper function to validate card state
+export function validateCardState(state: string): state is CardState {
+  return VALID_CARD_STATES.includes(state as CardState);
+}
+
+// Helper function to validate file type
+export function validateFileType(fileType: string): fileType is FileType {
+  return VALID_FILE_TYPES.includes(fileType as FileType);
+}
