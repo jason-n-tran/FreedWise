@@ -75,3 +75,120 @@ export interface BookJoinRow {
   b_created_at: number;
   b_updated_at: number;
 }
+
+export class RowMapper {
+  constructor(private db: IDatabaseManager) {}
+
+  /** Map a books-table row to a Book. */
+  toBook(row: BookRow): Book {
+    return this.mapBook(row);
+  }
+
+  /**
+   * Map a Book out of a joined row whose book columns are aliased with a `b_`
+   * prefix (SELECT b.title AS b_title …). Used by the search joins that carry
+   * book columns alongside highlight columns in a single result row.
+   */
+  toBookFromJoin(row: BookJoinRow): Book {
+    return this.mapBook({
+      id: row.b_id,
+      title: row.b_title,
+      author: row.b_author,
+      file_path: row.b_file_path,
+      file_type: row.b_file_type,
+      cover_image_path: row.b_cover_image_path,
+      total_pages: row.b_total_pages,
+      current_page: row.b_current_page,
+      last_cfi: row.b_last_cfi,
+      last_read_at: row.b_last_read_at,
+      created_at: row.b_created_at,
+      updated_at: row.b_updated_at,
+    });
+  }
+
+  /** Map a single highlight row to a Highlight (with its tags). */
+  async toHighlight(row: HighlightRow): Promise<Highlight> {
+    const [highlight] = await this.toHighlights([row]);
+    return highlight;
+  }
+
+  /**
+   * Map highlight rows to Highlight models, fetching all tags in ONE query.
+   * Replaces the previous per-row tag fetch (N+1) with a single batched join.
+   */
+  async toHighlights(rows: HighlightRow[]): Promise<Highlight[]> {
+    if (rows.length === 0) return [];
+
+    const tagsByHighlight = await this.fetchTagsForHighlights(rows.map(r => r.id));
+    return rows.map(row => this.mapHighlight(row, tagsByHighlight.get(row.id) ?? []));
+  }
+
+  // --- internal seam: batched tag fetch -------------------------------------
+
+  private async fetchTagsForHighlights(highlightIds: string[]): Promise<Map<string, Tag[]>> {
+    const placeholders = highlightIds.map(() => '?').join(',');
+    const rows = await this.db.executeQuery<TagRow & { highlight_id: string }>(
+      `SELECT t.*, ht.highlight_id AS highlight_id FROM tags t
+       INNER JOIN highlight_tags ht ON t.id = ht.tag_id
+       WHERE ht.highlight_id IN (${placeholders})
+       ORDER BY t.name ASC`,
+      highlightIds
+    );
+
+    const byHighlight = new Map<string, Tag[]>();
+    for (const row of rows) {
+      const tag: Tag = { id: row.id, name: row.name, createdAt: new Date(row.created_at) };
+      const list = byHighlight.get(row.highlight_id);
+      if (list) list.push(tag);
+      else byHighlight.set(row.highlight_id, [tag]);
+    }
+    return byHighlight;
+  }
+
+  // --- internal seam: pure mapping core (no DB, synchronous, unit-testable) --
+
+  private mapBook(row: BookRow): Book {
+    return {
+      id: row.id,
+      title: row.title,
+      author: row.author,
+      filePath: row.file_path,
+      fileType: row.file_type as 'pdf' | 'epub',
+      coverImagePath: row.cover_image_path || undefined,
+      totalPages: row.total_pages || undefined,
+      currentPage: row.current_page,
+      lastCfi: row.last_cfi || undefined,
+      lastReadAt: row.last_read_at ? new Date(row.last_read_at) : undefined,
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
+    };
+  }
+
+  private mapHighlight(row: HighlightRow, tags: Tag[]): Highlight {
+    const position: HighlightPosition = JSON.parse(row.position_data);
+    return {
+      id: row.id,
+      bookId: row.book_id,
+      text: row.text,
+      note: row.note || undefined,
+      tags,
+      position,
+      color: row.color,
+      createdAt: new Date(row.created_at),
+      updatedAt: new Date(row.updated_at),
+      dueDate: new Date(row.due_date),
+      stability: row.stability,
+      difficulty: row.difficulty,
+      elapsedDays: row.elapsed_days,
+      scheduledDays: row.scheduled_days,
+      reps: row.reps,
+      lapses: row.lapses,
+      state: row.state as CardState,
+      lastReviewedAt: row.last_reviewed_at ? new Date(row.last_reviewed_at) : undefined,
+      isFlashcard: row.is_flashcard === 1,
+      flashcardQuestion: row.flashcard_question || undefined,
+      isDiscarded: row.is_discarded === 1,
+      headerLevel: row.header_level || undefined,
+    };
+  }
+}
