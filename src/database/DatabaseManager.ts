@@ -115,3 +115,13 @@ export class DatabaseManager implements IDatabaseManager {
     }
   }
 }
+
+// Singleton instance
+let databaseManagerInstance: DatabaseManager | null = null;
+
+export function getDatabaseManager(): DatabaseManager {
+  if (!databaseManagerInstance) {
+    databaseManagerInstance = new DatabaseManager();
+  }
+  return databaseManagerInstance;
+}
