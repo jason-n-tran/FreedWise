@@ -47,3 +47,51 @@ const migrationV2: Migration = {
     }
   },
 };
+
+// All migrations in order
+export const MIGRATIONS: Migration[] = [migrationV1, migrationV2];
+
+export async function getCurrentSchemaVersion(tx: Transaction): Promise<number> {
+  try {
+    const result = await tx.executeQuery<{ value: string }>(
+      'SELECT value FROM settings WHERE key = ?',
+      ['schema_version']
+    );
+
+    if (result.length > 0) {
+      return parseInt(result[0].value, 10);
+    }
+  } catch (error) {
+    // Settings table might not exist yet
+    return 0;
+  }
+
+  return 0;
+}
+
+export async function runMigrations(
+  transaction: (callback: (tx: Transaction) => Promise<void>) => Promise<void>
+): Promise<void> {
+  await transaction(async tx => {
+    const currentVersion = await getCurrentSchemaVersion(tx);
+
+    // Run migrations that haven't been applied yet
+    let newVersion = currentVersion;
+    for (const migration of MIGRATIONS) {
+      if (migration.version > currentVersion) {
+        console.log(`Running migration v${migration.version}...`);
+        await migration.up(tx);
+        console.log(`Migration v${migration.version} completed`);
+        newVersion = migration.version;
+      }
+    }
+
+    if (newVersion > currentVersion) {
+      const now = Date.now();
+      await tx.executeUpdate(
+        'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, ?)',
+        ['schema_version', newVersion.toString(), now]
+      );
+    }
+  });
+}
