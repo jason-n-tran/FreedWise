@@ -52,3 +52,26 @@ export interface HighlightRow {
   is_discarded: number;
   header_level: number | null;
 }
+
+export interface TagRow {
+  id: string;
+  name: string;
+  created_at: number;
+}
+
+// A joined result row carrying book columns aliased with a `b_` prefix
+// (SELECT b.title AS b_title …), as produced by the search joins.
+export interface BookJoinRow {
+  b_id: string;
+  b_title: string;
+  b_author: string;
+  b_file_path: string;
+  b_file_type: string;
+  b_cover_image_path: string | null;
+  b_total_pages: number | null;
+  b_current_page: number;
+  b_last_cfi: string | null;
+  b_last_read_at: number | null;
+  b_created_at: number;
+  b_updated_at: number;
+}
