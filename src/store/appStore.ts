@@ -59,3 +59,42 @@ const initialState = {
   isInitialized: false,
   error: null,
 };
+
+export const useAppStore = create<AppState>(set => ({
+  ...initialState,
+
+  setCurrentBook: book => set({ currentBook: book }),
+  setCurrentPage: page => set({ currentPage: page }),
+  setBooks: books => set({ books }),
+  setIsLoadingBooks: loading => set({ isLoadingBooks: loading }),
+  setHighlights: highlights => set({ highlights }),
+  setIsLoadingHighlights: loading => set({ isLoadingHighlights: loading }),
+  setDueCount: count => set({ dueCount: count }),
+  setReviewSessionActive: active => set({ reviewSessionActive: active }),
+  setIsInitialized: initialized => set({ isInitialized: initialized }),
+  setError: error => set({ error }),
+  reset: () => set(initialState),
+
+  addBook: book => set(state => ({ books: [book, ...state.books.filter(b => b.id !== book.id)] })),
+
+  removeBook: bookId =>
+    set(state => ({
+      books: state.books.filter(b => b.id !== bookId),
+      // Cascade: drop the deleted book's highlights from shared state too.
+      highlights: state.highlights.filter(h => h.bookId !== bookId),
+    })),
+
+  updateBook: (id, updates) =>
+    set(state => ({
+      books: state.books.map(b => (b.id === id ? { ...b, ...updates } : b)),
+    })),
+
+  addHighlight: highlight => set(state => ({ highlights: [highlight, ...state.highlights] })),
+
+  updateHighlightInStore: (id, updates) =>
+    set(state => ({
+      highlights: state.highlights.map(h => (h.id === id ? { ...h, ...updates } : h)),
+    })),
+
+  removeHighlight: id => set(state => ({ highlights: state.highlights.filter(h => h.id !== id) })),
+}));
