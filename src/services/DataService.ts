@@ -42,3 +42,6 @@ interface ExportSnapshot {
     covers?: Record<string, ExportAsset>;
   };
 }
+
+const EXPORT_FORMAT_VERSION = 2;
+const DEVICE_ONLY_SETTING_KEYS = new Set(['notification_daily_id']);
