@@ -154,3 +154,66 @@ export interface IDataService {
   /** Delete all books, highlights, tags, review logs + their files. */
   clearAllData(): Promise<void>;
 }
+
+// Notification Service Interface
+export interface NotificationSettings {
+  enabled: boolean;
+  dailyTime: string; // HH:MM format
+  soundEnabled: boolean;
+  vibrationEnabled: boolean;
+}
+
+export interface INotificationService {
+  scheduleDailyReviewNotification(time: Date): Promise<void>;
+  cancelDailyNotification(): Promise<void>;
+  requestPermissions(): Promise<boolean>;
+  getNotificationSettings(): Promise<NotificationSettings>;
+  updateNotificationSettings(settings: NotificationSettings): Promise<void>;
+  sendImmediateNotification(title: string, body: string): Promise<void>;
+}
+
+// Search Service Interface
+export interface SearchFilters {
+  bookId?: string;
+  tags?: string[];
+  dateRange?: { start: Date; end: Date };
+  includeNotes?: boolean;
+}
+
+export interface SearchResult {
+  highlight: Highlight;
+  book: Book;
+  matchedText: string;
+  matchType: 'text' | 'note' | 'tag';
+}
+
+export interface ISearchService {
+  searchHighlights(
+    query: string,
+    filters?: SearchFilters,
+    offset?: number
+  ): Promise<SearchResult[]>;
+  loadMore(query: string, filters?: SearchFilters, offset?: number): Promise<SearchResult[]>;
+  searchBooks(query: string): Promise<Book[]>;
+  getRecentSearches(): Promise<string[]>;
+  saveSearch(query: string): Promise<void>;
+  clearSearchHistory(): Promise<void>;
+}
+
+// Text Selection Bridge Interface
+//
+// The bridge now only carries the *current* selection between a reader and
+// ReaderScreen. Highlight rendering lives inside each WebView reader and is
+// keyed by the highlight's DB id; the bridge no longer stores highlight markers
+// (that in-memory map both collided on page/cfi and was never hydrated from the
+// DB). See WebViewReader for the apply/remove/rehydrate highlight messaging.
+export interface SelectionData {
+  text: string;
+  position: HighlightPosition;
+  boundingRect: { x: number; y: number; width: number; height: number };
+}
+
+export interface ITextSelectionBridge {
+  captureSelection(source: 'pdf' | 'epub'): Promise<SelectionData | null>;
+  clearSelection(): void;
+}
