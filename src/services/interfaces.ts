@@ -104,3 +104,53 @@ export interface IExtractionService {
   /** Extract metadata + cover; resolves to {} if no extractor or on failure. */
   extract(uri: string, kind: 'pdf' | 'epub'): Promise<ExtractionResult>;
 }
+
+// Settings Service Interface
+//
+// General-purpose typed persistence over the `settings` table (key/value/
+// updated_at). Replaces ad-hoc per-feature settings access. Values are stored
+// as JSON strings.
+export type ThemeMode = 'light' | 'dark' | 'system';
+export type EpubFlow = 'paginated' | 'scrolled';
+
+export interface ISettingsService {
+  get<T>(key: string, defaultValue: T): Promise<T>;
+  set<T>(key: string, value: T): Promise<void>;
+  remove(key: string): Promise<void>;
+  // Typed convenience accessors for app-wide preferences.
+  getThemeMode(): Promise<ThemeMode>;
+  setThemeMode(mode: ThemeMode): Promise<void>;
+  getReaderFontScale(): Promise<number>;
+  setReaderFontScale(scale: number): Promise<void>;
+  getEpubFlow(): Promise<EpubFlow>;
+  setEpubFlow(flow: EpubFlow): Promise<void>;
+}
+
+// Data Service Interface — export, import, and wipe of all user data.
+export type DataImportMode = 'merge' | 'replace';
+
+export interface DataImportSummary {
+  mode: DataImportMode;
+  books: { added: number; updated: number; unchanged: number };
+  highlights: { added: number; updated: number; unchanged: number };
+  tags: { added: number; reused: number; unchanged: number };
+  reviewLogs: { added: number; unchanged: number };
+  settings: { imported: number; skipped: number };
+  files: { restored: number; missing: number };
+  warnings: string[];
+}
+
+export interface IDataService {
+  /** Build a JSON snapshot of all books, settings, review data, and restorable files. */
+  buildExport(): Promise<string>;
+  /** Save the export JSON to a user-chosen location and return a display path/URI. */
+  saveExportToDevice(): Promise<string>;
+  /** Write the export to a file and open the OS share sheet. */
+  exportAndShare(): Promise<void>;
+  /** Pick a JSON export file and import it. */
+  importFromPicker(mode: DataImportMode): Promise<DataImportSummary>;
+  /** Import a JSON export string. Exposed for tests and non-picker callers. */
+  importFromJson(json: string, mode: DataImportMode): Promise<DataImportSummary>;
+  /** Delete all books, highlights, tags, review logs + their files. */
+  clearAllData(): Promise<void>;
+}
