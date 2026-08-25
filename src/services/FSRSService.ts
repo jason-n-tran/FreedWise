@@ -14,3 +14,11 @@ const gradeToRating: Record<Grade, TSFSRSGrade> = {
   good: Rating.Good as TSFSRSGrade,
   easy: Rating.Easy as TSFSRSGrade,
 };
+
+// Map ts-fsrs State enum to our CardState type
+const stateToCardState: Record<number, CardState> = {
+  [State.New]: 'new',
+  [State.Learning]: 'learning',
+  [State.Review]: 'review',
+  [State.Relearning]: 'relearning',
+};
