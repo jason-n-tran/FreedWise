@@ -45,3 +45,42 @@ interface ExportSnapshot {
 
 const EXPORT_FORMAT_VERSION = 2;
 const DEVICE_ONLY_SETTING_KEYS = new Set(['notification_daily_id']);
+
+const BOOK_COLUMNS = [
+  'id',
+  'title',
+  'author',
+  'file_path',
+  'file_type',
+  'cover_image_path',
+  'total_pages',
+  'current_page',
+  'last_cfi',
+  'last_read_at',
+  'created_at',
+  'updated_at',
+];
+
+const HIGHLIGHT_COLUMNS = [
+  'id',
+  'book_id',
+  'text',
+  'note',
+  'color',
+  'position_data',
+  'created_at',
+  'updated_at',
+  'due_date',
+  'stability',
+  'difficulty',
+  'elapsed_days',
+  'scheduled_days',
+  'reps',
+  'lapses',
+  'state',
+  'last_reviewed_at',
+  'is_flashcard',
+  'flashcard_question',
+  'is_discarded',
+  'header_level',
+];
