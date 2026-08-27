@@ -13,3 +13,4 @@ import {
 
 const MAX_RESULTS = 50;
 const MAX_RECENT_SEARCHES = 20;
+const RECENT_SEARCHES_KEY = 'recent_searches';
