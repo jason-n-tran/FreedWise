@@ -22,3 +22,11 @@ const stateToCardState: Record<number, CardState> = {
   [State.Review]: 'review',
   [State.Relearning]: 'relearning',
 };
+
+// Map our CardState to ts-fsrs State enum
+const cardStateToState: Record<CardState, number> = {
+  new: State.New,
+  learning: State.Learning,
+  review: State.Review,
+  relearning: State.Relearning,
+};
