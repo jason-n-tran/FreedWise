@@ -8,3 +8,15 @@ import type { IDatabaseManager } from '../types/database';
 
 const DAILY_NOTIFICATION_ID_KEY = 'notification_daily_id';
 const NOTIFICATION_SETTINGS_KEY = 'notification_settings';
+const NOTIFICATION_CHANNEL_ID = 'daily-review';
+
+// Configure how notifications are presented when app is in foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
