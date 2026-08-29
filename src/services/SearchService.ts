@@ -14,3 +14,10 @@ import {
 const MAX_RESULTS = 50;
 const MAX_RECENT_SEARCHES = 20;
 const RECENT_SEARCHES_KEY = 'recent_searches';
+// Cache TTL: 60 seconds (Req 11.5)
+const CACHE_TTL_MS = 60_000;
+
+interface CacheEntry {
+  results: SearchResult[];
+  timestamp: number;
+}
