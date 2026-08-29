@@ -107,3 +107,13 @@ export class TextSelectionBridge implements ITextSelectionBridge {
 
 // Singleton instance
 let textSelectionBridgeInstance: TextSelectionBridge | null = null;
+
+/**
+ * Get the singleton TextSelectionBridge instance
+ */
+export function getTextSelectionBridge(): TextSelectionBridge {
+  if (!textSelectionBridgeInstance) {
+    textSelectionBridgeInstance = new TextSelectionBridge();
+  }
+  return textSelectionBridgeInstance;
+}
