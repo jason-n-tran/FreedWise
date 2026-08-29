@@ -84,3 +84,14 @@ const HIGHLIGHT_COLUMNS = [
   'is_discarded',
   'header_level',
 ];
+
+const TAG_COLUMNS = ['id', 'name', 'created_at'];
+const REVIEW_LOG_COLUMNS = [
+  'id',
+  'highlight_id',
+  'grade',
+  'reviewed_at',
+  'elapsed_days',
+  'scheduled_days',
+  'state',
+];
