@@ -86,3 +86,24 @@ let installPromise: Promise<string> | null = null;
 function libsDir(): Directory {
   return new Directory(Paths.document, 'webview-libs', LIB_VERSION);
 }
+
+/**
+ * Absolute file:// URI of a file inside the installed libs directory.
+ */
+export function libUri(fileName: string): string {
+  return new File(libsDir(), fileName).uri;
+}
+
+/** Directory URI used for WebView allowingReadAccessToURL scoping. */
+export function libsDirUri(): string {
+  return libsDir().uri;
+}
+
+/**
+ * The document root URI. Used for WebView allowingReadAccessToURL so the reader
+ * page (in webview-libs/) can ALSO read the book file (in books/) — both live
+ * under the document dir, so we scope read access to the shared root.
+ */
+export function documentRootUri(): string {
+  return new Directory(Paths.document).uri;
+}
