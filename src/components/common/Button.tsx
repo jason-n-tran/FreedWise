@@ -52,3 +52,41 @@ export default function Button({
     </TouchableOpacity>
   );
 }
+
+const useStyles = makeStyles(palette => ({
+  button: {
+    alignItems: 'center',
+    borderColor: palette.ink,
+    borderWidth: border.bold,
+    justifyContent: 'center',
+    minHeight: 52,
+    paddingHorizontal: space.xl,
+    paddingVertical: space.md,
+  },
+  danger: {
+    backgroundColor: palette.danger,
+  },
+  dangerText: {
+    color: palette.popText,
+  },
+  disabled: {
+    opacity: 0.4,
+  },
+  primary: {
+    backgroundColor: palette.pop,
+  },
+  primaryText: {
+    color: palette.popText,
+  },
+  secondary: {
+    backgroundColor: palette.paper,
+  },
+  secondaryText: {
+    color: palette.ink,
+  },
+  text: {
+    ...typo.data,
+    fontSize: 14,
+    textAlign: 'center',
+  },
+}));
