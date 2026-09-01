@@ -107,3 +107,61 @@ export function libsDirUri(): string {
 export function documentRootUri(): string {
   return new Directory(Paths.document).uri;
 }
+
+/**
+ * Ensure the vendored libs + HTML pages are installed for the current version.
+ * Idempotent and safe to call repeatedly; concurrent callers share one install.
+ * Returns the installed directory uri.
+ */
+export async function ensureInstalled(): Promise<string> {
+  if (installPromise) return installPromise;
+
+  installPromise = (async () => {
+    const dir = libsDir();
+    const marker = new File(dir, '.installed');
+
+    if (marker.exists) {
+      return dir.uri;
+    }
+
+    if (!dir.exists) {
+      dir.create({ intermediates: true, idempotent: true });
+    }
+
+    // Copy each bundled lib asset into the versioned directory.
+    for (const [name, mod] of Object.entries(LIB_MODULES)) {
+      const asset = Asset.fromModule(mod);
+      await asset.downloadAsync(); // resolves localUri for the bundled asset
+      const target = new File(dir, name);
+      if (target.exists) {
+        target.delete();
+      }
+      if (asset.localUri) {
+        new File(asset.localUri).copy(target);
+      }
+    }
+
+    // Write the HTML pages (string constants) next to the scripts.
+    writeText(new File(dir, 'reader-pdf.html'), pdfReaderHtml());
+    writeText(new File(dir, 'reader-epub.html'), epubReaderHtml());
+    writeText(new File(dir, 'reader-extract.html'), extractHtml());
+
+    writeText(marker, LIB_VERSION);
+    return dir.uri;
+  })();
+
+  return installPromise;
+}
+
+function writeText(file: File, contents: string): void {
+  if (file.exists) {
+    file.delete();
+  }
+  file.create();
+  file.write(contents);
+}
+
+/** Test seam: reset the cached install promise. */
+export function __resetForTests(): void {
+  installPromise = null;
+}
