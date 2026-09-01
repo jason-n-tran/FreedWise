@@ -67,3 +67,64 @@ export default function AppTabBar({ state, descriptors, navigation }: BottomTabB
 function abbreviate(label: string): string {
   return label.toUpperCase();
 }
+
+const useStyles = makeStyles(palette => ({
+  badge: {
+    alignItems: 'center',
+    backgroundColor: palette.marker,
+    borderColor: palette.ink,
+    borderWidth: border.hair,
+    justifyContent: 'center',
+    minWidth: 16,
+    paddingHorizontal: 3,
+    position: 'absolute',
+    // Float above the label's top-right corner so it never overlaps the text.
+    right: -14,
+    top: -10,
+  },
+  badgeText: {
+    ...type.data,
+    color: palette.ink,
+    fontSize: 9,
+    lineHeight: 13,
+    textAlign: 'center',
+  },
+  bar: {
+    backgroundColor: palette.paper,
+    borderTopColor: palette.line,
+    borderTopWidth: border.bold,
+    flexDirection: 'row',
+    paddingTop: space.sm,
+  },
+  label: {
+    ...type.label,
+    color: palette.inkFaint,
+    fontSize: 10,
+    letterSpacing: 0.8,
+    textAlign: 'center',
+  },
+  labelActive: {
+    color: palette.ink,
+  },
+  labelWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 3,
+    position: 'relative',
+  },
+  swipe: {
+    backgroundColor: palette.marker,
+    bottom: 1,
+    height: 7,
+    left: -3,
+    position: 'absolute',
+    right: -3,
+    transform: [{ skewX: '-9deg' }],
+  },
+  tab: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+}));
