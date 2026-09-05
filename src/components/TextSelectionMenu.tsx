@@ -52,3 +52,38 @@ export default function TextSelectionMenu({
     </Modal>
   );
 }
+
+const useStyles = makeStyles(palette => ({
+  backdrop: {
+    backgroundColor: 'transparent',
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  menu: {
+    backgroundColor: palette.ink,
+    borderColor: palette.ink,
+    borderWidth: border.bold,
+    marginBottom: 48,
+  },
+  menuButton: {
+    overflow: 'hidden',
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    position: 'relative',
+  },
+  menuButtonText: {
+    ...typo.data,
+    color: palette.paper,
+    textAlign: 'center',
+  },
+  swipe: {
+    backgroundColor: palette.marker,
+    bottom: 6,
+    height: 8,
+    left: 4,
+    position: 'absolute',
+    right: 4,
+    transform: [{ skewX: '-9deg' }],
+  },
+}));
