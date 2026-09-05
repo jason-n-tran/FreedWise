@@ -36,3 +36,53 @@ export default function Masthead({ readout, title, markWord, right }: MastheadPr
     </View>
   );
 }
+
+function renderTitle(styles: ReturnType<typeof useStyles>, title: string, markWord?: string) {
+  if (!markWord || !title.includes(markWord)) {
+    return <Text style={styles.title}>{title}</Text>;
+  }
+  const [before, ...rest] = title.split(markWord);
+  const after = rest.join(markWord);
+  return (
+    <View style={styles.markTitleRow}>
+      {before ? <Text style={styles.title}>{before}</Text> : null}
+      <MarkerText textStyle={styles.title}>{markWord}</MarkerText>
+      {after ? <Text style={styles.title}>{after}</Text> : null}
+    </View>
+  );
+}
+
+const useStyles = makeStyles(palette => ({
+  container: {
+    backgroundColor: palette.paper,
+    borderBottomColor: palette.line,
+    borderBottomWidth: border.bold,
+    paddingBottom: space.md,
+    paddingHorizontal: space.lg,
+  },
+  markTitleRow: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  readout: {
+    ...type.eyebrow,
+    color: palette.inkSoft,
+    marginBottom: space.sm,
+  },
+  right: {
+    marginLeft: space.md,
+  },
+  title: {
+    ...type.title,
+    color: palette.ink,
+  },
+  titleRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  titleWrap: {
+    flex: 1,
+  },
+}));
