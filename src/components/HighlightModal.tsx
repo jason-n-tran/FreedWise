@@ -25,3 +25,12 @@ interface HighlightModalProps {
   onSave: (data: { note: string; tags: string[]; color: string }) => void;
   onCancel: () => void;
 }
+
+// Available highlight colors — the marker ink palette.
+const HIGHLIGHT_COLORS = [
+  { name: 'Yellow', value: markerInks.yellow },
+  { name: 'Green', value: markerInks.green },
+  { name: 'Blue', value: markerInks.blue },
+  { name: 'Pink', value: markerInks.pink },
+  { name: 'Orange', value: markerInks.orange },
+];
