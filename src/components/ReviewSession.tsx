@@ -121,3 +121,113 @@ export default function ReviewSession({
     </View>
   );
 }
+
+const useStyles = makeStyles(palette => ({
+  bookTitle: {
+    ...typo.eyebrow,
+    color: palette.ink,
+    marginBottom: 2,
+  },
+  centered: {
+    alignItems: 'center',
+    backgroundColor: palette.paper,
+    flex: 1,
+    justifyContent: 'center',
+    padding: space.xxl,
+  },
+  chapterTitle: {
+    ...typo.label,
+    color: palette.inkFaint,
+  },
+  completeMark: {
+    color: palette.good,
+    fontFamily: typo.title.fontFamily,
+    fontSize: 56,
+    marginBottom: space.md,
+  },
+  completeSubtitle: {
+    ...typo.eyebrow,
+    color: palette.inkSoft,
+    marginBottom: space.xxl,
+    textAlign: 'center',
+  },
+  completeTitle: {
+    ...typo.title,
+    color: palette.ink,
+    marginBottom: space.sm,
+  },
+  container: {
+    backgroundColor: palette.paper,
+    flex: 1,
+  },
+  contextRow: {
+    marginBottom: space.lg,
+  },
+  doneButton: {
+    minWidth: 180,
+  },
+  flashcardQuestion: {
+    ...typo.heading,
+    color: palette.ink,
+    fontSize: 20,
+    lineHeight: 28,
+  },
+  gradingArea: {
+    backgroundColor: palette.paper,
+    borderTopColor: palette.line,
+    borderTopWidth: border.bold,
+    paddingHorizontal: space.lg,
+    paddingTop: space.lg,
+  },
+  markerEdge: {
+    width: 8,
+  },
+  noteText: {
+    ...typo.note,
+    color: palette.inkSoft,
+    marginTop: space.lg,
+  },
+  progressBar: {
+    paddingBottom: space.sm,
+    paddingHorizontal: space.lg,
+    paddingTop: space.lg,
+  },
+  progressFill: {
+    backgroundColor: palette.ink,
+    height: '100%',
+  },
+  progressText: {
+    ...typo.data,
+    color: palette.inkSoft,
+    marginBottom: space.sm,
+  },
+  progressTrack: {
+    backgroundColor: palette.lineSoft,
+    borderColor: palette.line,
+    borderWidth: border.hair,
+    height: 6,
+    overflow: 'hidden',
+  },
+  quoteBody: {
+    flex: 1,
+    padding: space.lg,
+  },
+  quoteCard: {
+    backgroundColor: palette.card,
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    flexDirection: 'row',
+    overflow: 'hidden',
+  },
+  quoteText: {
+    ...typo.quoteLarge,
+    color: palette.ink,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: space.lg,
+    paddingBottom: space.xl,
+  },
+}));
