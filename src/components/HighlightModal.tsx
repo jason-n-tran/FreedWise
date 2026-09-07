@@ -221,3 +221,194 @@ export default function HighlightModal({
     </Modal>
   );
 }
+
+const useStyles = makeStyles(palette => ({
+  actions: {
+    borderTopColor: palette.line,
+    borderTopWidth: border.bold,
+    flexDirection: 'row',
+    gap: space.md,
+    paddingHorizontal: space.xl,
+    paddingVertical: space.lg,
+  },
+  addTagButton: {
+    backgroundColor: palette.ink,
+    borderColor: palette.ink,
+    borderWidth: border.rule,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+  },
+  addTagButtonText: {
+    ...typo.data,
+    color: palette.paper,
+  },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(23,24,28,0.55)',
+  },
+  button: {
+    alignItems: 'center',
+    borderColor: palette.ink,
+    borderWidth: border.bold,
+    flex: 1,
+    paddingVertical: space.lg,
+  },
+  cancelButton: {
+    backgroundColor: palette.paper,
+  },
+  cancelButtonText: {
+    ...typo.data,
+    color: palette.ink,
+  },
+  charCount: {
+    ...typo.label,
+    color: palette.inkFaint,
+    marginTop: space.xs,
+    textAlign: 'right',
+  },
+  closeButton: {
+    alignItems: 'center',
+    height: 32,
+    justifyContent: 'center',
+    width: 32,
+  },
+  closeButtonText: {
+    color: palette.ink,
+    fontSize: 22,
+  },
+  colorCheckmark: {
+    color: palette.ink,
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  colorOption: {
+    alignItems: 'center',
+    borderColor: palette.ink,
+    borderWidth: border.hair,
+    height: 48,
+    justifyContent: 'center',
+    width: 48,
+  },
+  colorOptionSelected: {
+    borderWidth: border.bold,
+  },
+  colorPicker: {
+    flexDirection: 'row',
+    gap: space.md,
+  },
+  container: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  content: {
+    paddingHorizontal: space.xl,
+    paddingVertical: space.lg,
+  },
+  header: {
+    alignItems: 'center',
+    borderBottomColor: palette.line,
+    borderBottomWidth: border.bold,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: space.xl,
+    paddingVertical: space.lg,
+  },
+  headerTitle: {
+    ...typo.eyebrow,
+    color: palette.ink,
+    fontSize: 13,
+  },
+  modal: {
+    backgroundColor: palette.paper,
+    borderColor: palette.line,
+    borderTopWidth: border.bold,
+    maxHeight: '90%',
+  },
+  noteInput: {
+    ...typo.note,
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    color: palette.ink,
+    maxHeight: 200,
+    minHeight: 100,
+    padding: space.md,
+  },
+  saveButton: {
+    backgroundColor: palette.pop,
+  },
+  saveButtonText: {
+    ...typo.data,
+    color: palette.popText,
+  },
+  section: {
+    marginBottom: space.xl,
+  },
+  sectionLabel: {
+    ...typo.eyebrow,
+    color: palette.inkSoft,
+    marginBottom: space.sm,
+  },
+  tag: {
+    alignItems: 'center',
+    borderColor: palette.line,
+    borderWidth: border.hair,
+    flexDirection: 'row',
+    gap: space.xs,
+    paddingLeft: space.md,
+    paddingRight: space.sm,
+    paddingVertical: space.xs,
+  },
+  tagInput: {
+    ...typo.body,
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    color: palette.ink,
+    flex: 1,
+    padding: space.md,
+  },
+  tagInputContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: space.sm,
+  },
+  tagList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.sm,
+    marginTop: space.md,
+  },
+  tagRemove: {
+    alignItems: 'center',
+    height: 20,
+    justifyContent: 'center',
+    width: 20,
+  },
+  tagRemoveText: {
+    color: palette.inkSoft,
+    fontSize: 14,
+  },
+  tagText: {
+    ...typo.label,
+    color: palette.ink,
+  },
+  textPreview: {
+    backgroundColor: palette.card,
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    flexDirection: 'row',
+    overflow: 'hidden',
+  },
+  textPreviewEdge: {
+    width: 8,
+  },
+  textPreviewText: {
+    ...typo.quote,
+    color: palette.ink,
+    flex: 1,
+    padding: space.md,
+  },
+}));
