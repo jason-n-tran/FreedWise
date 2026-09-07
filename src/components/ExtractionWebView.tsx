@@ -125,3 +125,15 @@ export default function ExtractionWebView() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  // Off-screen + zero-size so it never affects layout but still executes JS.
+  hidden: {
+    height: 0,
+    left: -1000,
+    opacity: 0,
+    position: 'absolute',
+    top: -1000,
+    width: 0,
+  },
+});
