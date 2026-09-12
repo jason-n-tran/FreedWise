@@ -324,3 +324,188 @@ export default function LibraryScreen({ navigation }: Props) {
     </View>
   );
 }
+
+const useStyles = makeStyles(palette => ({
+  bookAuthor: {
+    ...typo.label,
+    color: palette.inkSoft,
+    marginBottom: space.xs,
+  },
+  bookCard: {
+    backgroundColor: palette.card,
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    flex: 1,
+    maxWidth: '50%',
+  },
+  bookCardLeft: {
+    marginRight: space.sm,
+  },
+  bookCardRight: {
+    marginLeft: space.sm,
+  },
+  bookInfo: {
+    borderTopColor: palette.line,
+    borderTopWidth: border.hair,
+    padding: space.md,
+  },
+  bookPages: {
+    ...typo.eyebrow,
+    color: palette.inkFaint,
+  },
+  bookTitle: {
+    ...typo.bodyStrong,
+    color: palette.ink,
+    marginBottom: space.xs,
+  },
+  column: {
+    marginBottom: space.lg,
+  },
+  container: {
+    backgroundColor: palette.paper,
+    flex: 1,
+  },
+  cover: {
+    height: '100%',
+    resizeMode: 'cover',
+    width: '100%',
+  },
+  coverContainer: {
+    aspectRatio: 0.7,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: space.xxl,
+    paddingTop: 80,
+  },
+  emptyMark: {
+    ...typo.readout,
+    color: palette.ink,
+    marginBottom: space.md,
+  },
+  emptyText: {
+    ...typo.body,
+    color: palette.inkSoft,
+    textAlign: 'center',
+  },
+  emptyTitle: {
+    ...typo.title,
+    color: palette.ink,
+    marginBottom: space.sm,
+  },
+  importButton: {
+    backgroundColor: palette.pop,
+    borderColor: palette.ink,
+    borderWidth: border.rule,
+    minWidth: 96,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+  },
+  importButtonText: {
+    ...typo.data,
+    color: palette.popText,
+    textAlign: 'center',
+  },
+  listContent: {
+    flexGrow: 1,
+    padding: space.lg,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    backgroundColor: palette.paper,
+    flex: 1,
+    justifyContent: 'center',
+  },
+  placeholderCover: {
+    alignItems: 'center',
+    backgroundColor: palette.ink,
+    height: '100%',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    width: '100%',
+  },
+  placeholderSwipe: {
+    backgroundColor: palette.marker,
+    height: 18,
+    position: 'absolute',
+    right: -8,
+    top: '46%',
+    transform: [{ skewX: '-9deg' }],
+    width: '70%',
+  },
+  placeholderText: {
+    color: palette.paper,
+    fontFamily: typo.title.fontFamily,
+    fontSize: 36,
+    letterSpacing: -1,
+  },
+  placeholderType: {
+    ...typo.eyebrow,
+    bottom: space.sm,
+    color: palette.inkFaint,
+    position: 'absolute',
+  },
+  editOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(23,24,28,0.55)',
+  },
+  editCard: {
+    backgroundColor: palette.paper,
+    borderTopColor: palette.line,
+    borderTopWidth: border.bold,
+    paddingHorizontal: space.xl,
+    paddingTop: space.xl,
+    paddingBottom: 40,
+  },
+  editTitle: {
+    ...typo.eyebrow,
+    color: palette.inkSoft,
+    marginBottom: space.lg,
+  },
+  editLabel: {
+    ...typo.label,
+    color: palette.inkSoft,
+    marginBottom: space.xs,
+    marginTop: space.md,
+  },
+  editInput: {
+    ...typo.body,
+    color: palette.ink,
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+  },
+  editButtons: {
+    flexDirection: 'row',
+    gap: space.md,
+    marginTop: space.xl,
+  },
+  editButton: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: space.md,
+    borderWidth: border.rule,
+  },
+  editCancel: {
+    borderColor: palette.line,
+    backgroundColor: palette.paper,
+  },
+  editCancelText: {
+    ...typo.data,
+    color: palette.ink,
+  },
+  editSave: {
+    borderColor: palette.ink,
+    backgroundColor: palette.pop,
+  },
+  editSaveText: {
+    ...typo.data,
+    color: palette.popText,
+  },
+}));
