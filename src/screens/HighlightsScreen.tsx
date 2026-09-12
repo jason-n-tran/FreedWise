@@ -23,3 +23,8 @@ import { Masthead } from '../components';
 import HighlightModal from '../components/HighlightModal';
 
 type Props = MainTabScreenProps<'Highlights'>;
+
+interface BookSection {
+  book: Book;
+  data: Highlight[];
+}
