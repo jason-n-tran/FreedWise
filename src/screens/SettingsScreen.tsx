@@ -32,3 +32,8 @@ const APP_VERSION = '1.0.0';
 
 // Generate hours 0-23 and minutes 0, 15, 30, 45 for the time picker
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const MINUTES = [0, 15, 30, 45];
+
+function pad(n: number): string {
+  return n.toString().padStart(2, '0');
+}
