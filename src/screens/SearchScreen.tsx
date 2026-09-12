@@ -35,3 +35,53 @@ interface HighlightedTextProps {
   highlightStyle?: object;
   numberOfLines?: number;
 }
+
+function HighlightedText({
+  text,
+  query,
+  style,
+  highlightStyle,
+  numberOfLines,
+}: HighlightedTextProps) {
+  const styles = useStyles();
+  if (!query || query.length < 2) {
+    return (
+      <Text style={style} numberOfLines={numberOfLines}>
+        {text}
+      </Text>
+    );
+  }
+
+  const lower = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  const parts: { text: string; highlight: boolean }[] = [];
+  let lastIndex = 0;
+  let idx = lower.indexOf(lowerQuery);
+
+  while (idx !== -1) {
+    if (idx > lastIndex) {
+      parts.push({ text: text.slice(lastIndex, idx), highlight: false });
+    }
+    parts.push({ text: text.slice(idx, idx + query.length), highlight: true });
+    lastIndex = idx + query.length;
+    idx = lower.indexOf(lowerQuery, lastIndex);
+  }
+
+  if (lastIndex < text.length) {
+    parts.push({ text: text.slice(lastIndex), highlight: false });
+  }
+
+  return (
+    <Text style={style} numberOfLines={numberOfLines}>
+      {parts.map((part, i) =>
+        part.highlight ? (
+          <Text key={i} style={[styles.matchHighlight, highlightStyle]}>
+            {part.text}
+          </Text>
+        ) : (
+          <Text key={i}>{part.text}</Text>
+        )
+      )}
+    </Text>
+  );
+}
