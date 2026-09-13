@@ -407,3 +407,147 @@ export default function HighlightsScreen({ navigation }: Props) {
     </View>
   );
 }
+
+const useStyles = makeStyles(palette => ({
+  colorBar: {
+    width: 8,
+  },
+  container: {
+    backgroundColor: palette.paper,
+    flex: 1,
+  },
+  dateText: {
+    ...typo.eyebrow,
+    color: palette.inkFaint,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: space.xxl,
+  },
+  emptyMark: {
+    color: palette.ink,
+    fontFamily: typo.title.fontFamily,
+    fontSize: 48,
+    marginBottom: space.sm,
+  },
+  emptyText: {
+    ...typo.body,
+    color: palette.inkSoft,
+    textAlign: 'center',
+  },
+  emptyTitle: {
+    ...typo.title,
+    color: palette.ink,
+    marginBottom: space.sm,
+  },
+  filterBar: {
+    backgroundColor: palette.paper,
+    borderBottomColor: palette.line,
+    borderBottomWidth: border.hair,
+    paddingVertical: space.sm,
+  },
+  filterChip: {
+    backgroundColor: palette.paper,
+    borderColor: palette.line,
+    borderWidth: border.hair,
+    maxWidth: 160,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+  },
+  filterChipActive: {
+    backgroundColor: palette.ink,
+    borderColor: palette.ink,
+  },
+  filterChipText: {
+    ...typo.label,
+    color: palette.inkSoft,
+  },
+  filterChipTextActive: {
+    color: palette.paper,
+  },
+  filterList: {
+    gap: space.sm,
+    paddingHorizontal: space.md,
+  },
+  footerText: {
+    ...typo.eyebrow,
+    color: palette.inkFaint,
+    paddingVertical: space.lg,
+    textAlign: 'center',
+  },
+  highlightCard: {
+    backgroundColor: palette.card,
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    flexDirection: 'row',
+    marginHorizontal: space.lg,
+    marginTop: space.md,
+    overflow: 'hidden',
+  },
+  highlightContent: {
+    flex: 1,
+    padding: space.md,
+  },
+  highlightText: {
+    ...typo.quote,
+    color: palette.ink,
+    marginBottom: space.sm,
+  },
+  listContent: {
+    paddingBottom: space.xl,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    backgroundColor: palette.paper,
+    flex: 1,
+    justifyContent: 'center',
+  },
+  metaRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.sm,
+    marginTop: space.xs,
+  },
+  noteText: {
+    ...typo.note,
+    color: palette.inkSoft,
+    marginBottom: space.sm,
+  },
+  sectionCount: {
+    ...typo.data,
+    color: palette.paper,
+  },
+  sectionHeader: {
+    alignItems: 'center',
+    backgroundColor: palette.ink,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
+  },
+  sectionTitle: {
+    ...typo.eyebrow,
+    color: palette.paper,
+    flex: 1,
+    marginRight: space.sm,
+  },
+  tag: {
+    borderColor: palette.lineSoft,
+    borderWidth: border.hair,
+    paddingHorizontal: space.sm,
+    paddingVertical: 2,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.xs,
+  },
+  tagText: {
+    ...typo.label,
+    color: palette.inkSoft,
+    fontSize: 11,
+  },
+}));
