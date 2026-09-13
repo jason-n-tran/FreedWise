@@ -219,3 +219,111 @@ function StatItem({ label, value }: { label: string; value: number }) {
     </View>
   );
 }
+
+const useStyles = makeStyles(palette => ({
+  actionArea: {
+    marginTop: space.xl,
+  },
+  centered: {
+    alignItems: 'center',
+    backgroundColor: palette.paper,
+    flex: 1,
+    justifyContent: 'center',
+    padding: space.lg,
+  },
+  cleanMark: {
+    color: palette.good,
+    fontFamily: typo.title.fontFamily,
+    fontSize: 40,
+    marginBottom: space.sm,
+  },
+  cleanState: {
+    alignItems: 'center',
+    borderColor: palette.lineSoft,
+    borderWidth: border.rule,
+    paddingVertical: space.xl,
+  },
+  container: {
+    backgroundColor: palette.paper,
+    flex: 1,
+  },
+  content: {
+    padding: space.lg,
+    paddingBottom: space.xxl,
+  },
+  errorEyebrow: {
+    ...typo.eyebrow,
+    color: palette.danger,
+    marginBottom: space.sm,
+  },
+  errorText: {
+    ...typo.body,
+    color: palette.ink,
+    marginBottom: space.lg,
+    textAlign: 'center',
+  },
+  hero: {
+    borderColor: palette.line,
+    borderWidth: border.bold,
+    marginBottom: space.lg,
+    padding: space.xl,
+  },
+  heroLabel: {
+    ...typo.eyebrow,
+    color: palette.inkSoft,
+    marginBottom: space.sm,
+  },
+  heroNumber: {
+    color: palette.ink,
+    fontFamily: typo.readout.fontFamily,
+    fontSize: 84,
+    letterSpacing: -3,
+    lineHeight: 88,
+  },
+  noDueText: {
+    ...typo.body,
+    color: palette.inkSoft,
+    textAlign: 'center',
+  },
+  panel: {
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    marginBottom: space.lg,
+    padding: space.lg,
+  },
+  panelTitle: {
+    ...typo.eyebrow,
+    color: palette.inkSoft,
+    marginBottom: space.lg,
+  },
+  retryButton: {
+    minWidth: 120,
+  },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  scroll: {
+    flex: 1,
+  },
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statLabel: {
+    ...typo.eyebrow,
+    color: palette.inkSoft,
+    marginTop: space.xs,
+  },
+  statValue: {
+    ...typo.readout,
+    color: palette.ink,
+    fontSize: 34,
+    lineHeight: 36,
+  },
+  vline: {
+    backgroundColor: palette.lineSoft,
+    height: 36,
+    width: border.hair,
+  },
+}));
