@@ -209,3 +209,13 @@ export default function ReviewScreen({ navigation }: Props) {
     </View>
   );
 }
+
+function StatItem({ label, value }: { label: string; value: number }) {
+  const styles = useStyles();
+  return (
+    <View style={styles.statItem}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
