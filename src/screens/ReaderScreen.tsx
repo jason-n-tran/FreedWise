@@ -482,3 +482,166 @@ export default function ReaderScreen({ route, navigation }: Props) {
     </View>
   );
 }
+
+const useStyles = makeStyles(palette => ({
+  backButton: {
+    backgroundColor: palette.pop,
+    borderColor: palette.ink,
+    borderWidth: border.rule,
+    paddingHorizontal: space.xl,
+    paddingVertical: space.md,
+  },
+  backButtonText: {
+    ...typo.data,
+    color: palette.popText,
+  },
+  centerContainer: {
+    alignItems: 'center',
+    backgroundColor: palette.paper,
+    flex: 1,
+    justifyContent: 'center',
+    padding: space.xl,
+  },
+  container: {
+    backgroundColor: palette.paper,
+    flex: 1,
+  },
+  errorText: {
+    ...typo.body,
+    color: palette.danger,
+    marginBottom: space.xl,
+    textAlign: 'center',
+  },
+  header: {
+    alignItems: 'center',
+    backgroundColor: palette.paper,
+    borderBottomColor: palette.line,
+    borderBottomWidth: border.bold,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: space.md,
+    paddingHorizontal: space.lg,
+  },
+  headerButton: {
+    alignItems: 'center',
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  headerButtonText: {
+    color: palette.ink,
+    fontSize: 26,
+  },
+  headerSubtitle: {
+    ...typo.eyebrow,
+    color: palette.inkSoft,
+    marginTop: 2,
+  },
+  headerTitle: {
+    ...typo.heading,
+    color: palette.ink,
+  },
+  headerTitleContainer: {
+    alignItems: 'center',
+    flex: 1,
+    marginHorizontal: space.md,
+  },
+  loadingText: {
+    ...typo.eyebrow,
+    color: palette.inkSoft,
+    marginTop: space.md,
+  },
+  removeButton: {
+    borderColor: palette.danger,
+    borderWidth: border.rule,
+    marginTop: space.md,
+    paddingHorizontal: space.xl,
+    paddingVertical: space.md,
+  },
+  removeButtonText: {
+    ...typo.data,
+    color: palette.danger,
+  },
+  unavailableText: {
+    ...typo.body,
+    color: palette.inkSoft,
+    marginBottom: space.xl,
+    paddingHorizontal: space.sm,
+    textAlign: 'center',
+  },
+  unavailableTitle: {
+    ...typo.title,
+    color: palette.ink,
+    marginBottom: space.md,
+    textAlign: 'center',
+  },
+  progressContainer: {
+    position: 'absolute',
+    bottom: space.xl,
+    left: space.xl,
+    right: space.xl,
+    backgroundColor: palette.card,
+    borderColor: palette.ink,
+    borderWidth: border.rule,
+    padding: space.md,
+    alignItems: 'stretch',
+  },
+  sliderTrackContainer: {
+    height: 20,
+    justifyContent: 'center',
+    position: 'relative',
+    width: '100%',
+    marginBottom: space.sm,
+  },
+  sliderTrack: {
+    height: 4,
+    backgroundColor: palette.lineSoft,
+    width: '100%',
+    borderRadius: 2,
+  },
+  sliderTrackFill: {
+    height: '100%',
+    backgroundColor: palette.pop,
+    borderRadius: 2,
+  },
+  sliderThumb: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: palette.ink,
+    borderWidth: 1.5,
+    borderColor: palette.card,
+    transform: [{ translateX: -6 }],
+  },
+  progressTextRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressText: {
+    ...typo.label,
+    color: palette.ink,
+  },
+  hideButton: {
+    paddingHorizontal: space.xs,
+  },
+  hideButtonText: {
+    ...typo.label,
+    color: palette.inkSoft,
+  },
+  collapsedProgressContainer: {
+    position: 'absolute',
+    bottom: space.xl,
+    right: space.xl,
+    backgroundColor: palette.card,
+    borderColor: palette.ink,
+    borderWidth: border.rule,
+    paddingHorizontal: space.sm,
+    paddingVertical: space.xs,
+  },
+  collapsedProgressText: {
+    ...typo.label,
+    color: palette.ink,
+  },
+}));
