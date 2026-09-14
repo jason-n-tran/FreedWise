@@ -505,3 +505,26 @@ interface SettingRowProps {
   description?: string;
   children: React.ReactNode;
 }
+
+function SettingRow({ label, description, children }: SettingRowProps) {
+  const styles = useStyles();
+  return (
+    <View style={styles.row}>
+      <View style={styles.rowLeft}>
+        <Text style={styles.rowLabel}>{label}</Text>
+        {description ? <Text style={styles.rowDescription}>{description}</Text> : null}
+      </View>
+      {children}
+    </View>
+  );
+}
+
+interface TimePickerModalProps {
+  visible: boolean;
+  hour: number;
+  minute: number;
+  onChangeHour: (h: number) => void;
+  onChangeMinute: (m: number) => void;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
