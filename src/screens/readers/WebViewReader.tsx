@@ -34,3 +34,14 @@ export interface RehydrateHighlight {
   position: HighlightPosition;
   color: string;
 }
+
+interface WebViewReaderProps {
+  book: Book;
+  kind: 'pdf' | 'epub';
+  highlights: Highlight[];
+  activeHighlightId?: string;
+  onSelection: (data: SelectionData) => void;
+  onHighlightTap?: (highlightId: string) => void;
+  onProgress?: (page: number, total?: number, rawPct?: number, rawCfi?: string) => void;
+  totalPages: number;
+}
