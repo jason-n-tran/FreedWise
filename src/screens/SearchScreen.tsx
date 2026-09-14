@@ -246,3 +246,357 @@ function FilterModal({ visible, books, allTags, filters, onApply, onClose }: Fil
     </Modal>
   );
 }
+
+// ---------------------------------------------------------------------------
+// SearchScreen - main component
+// ---------------------------------------------------------------------------
+export default function SearchScreen({ navigation }: Props) {
+  const styles = useStyles();
+  const { palette } = useTheme();
+  const [query, setQuery] = useState('');
+  const [results, setResults] = useState<SearchResult[]>([]);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [filters, setFilters] = useState<SearchFilters>({});
+  const [allBooks, setAllBooks] = useState<Book[]>([]);
+  const [allTags, setAllTags] = useState<string[]>([]);
+
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchService = ServiceFactory.getInstance().getSearchService();
+  const highlightService = ServiceFactory.getInstance().getHighlightService();
+  const bookService = ServiceFactory.getInstance().getBookService();
+
+  // Load recent searches and books/tags on mount
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  const loadInitialData = async () => {
+    try {
+      const [recent, books] = await Promise.all([
+        searchService.getRecentSearches(),
+        bookService.getBooks(),
+      ]);
+      setRecentSearches(recent);
+      setAllBooks(books);
+
+      // Collect all tags from highlights
+      const highlightArrays = await Promise.all(
+        books.map(b => highlightService.getHighlightsByBook(b.id))
+      );
+      const tagSet = new Set<string>();
+      highlightArrays.flat().forEach(h => h.tags.forEach(t => tagSet.add(t.name)));
+      setAllTags(Array.from(tagSet).sort());
+    } catch (error) {
+      console.error('Failed to load initial data:', error);
+    }
+  };
+
+  // Debounced search - Req 7.1, 7.2
+  const handleQueryChange = useCallback(
+    (text: string) => {
+      setQuery(text);
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+      if (text.length < 2) {
+        setResults([]);
+        setOffset(0);
+        setHasMore(false);
+        return;
+      }
+
+      debounceTimer.current = setTimeout(() => {
+        performSearch(text, filters, 0);
+      }, 300);
+    },
+    [filters]
+  );
+
+  const performSearch = useCallback(
+    async (q: string, f: SearchFilters, off: number) => {
+      if (q.length < 2) return;
+      try {
+        setLoading(true);
+        const res = await searchService.searchHighlights(q, f, off);
+        setResults(res);
+        setOffset(res.length);
+        setHasMore(res.length === 50);
+
+        // Save to recent searches
+        await searchService.saveSearch(q);
+        const updated = await searchService.getRecentSearches();
+        setRecentSearches(updated);
+      } catch (error) {
+        console.error('Search failed:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [searchService]
+  );
+
+  // Load more results - Req 7.9
+  const handleLoadMore = useCallback(async () => {
+    if (!hasMore || loadingMore || query.length < 2) return;
+    try {
+      setLoadingMore(true);
+      const more = await searchService.loadMore(query, filters, offset);
+      setResults(prev => {
+        const seen = new Set(prev.map(r => r.highlight.id));
+        const unique = more.filter(r => !seen.has(r.highlight.id));
+        return [...prev, ...unique];
+      });
+      setOffset(prev => prev + more.length);
+      setHasMore(more.length === 50);
+    } catch (error) {
+      console.error('Load more failed:', error);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [hasMore, loadingMore, query, filters, offset, searchService]);
+
+  // Apply filters - Req 7.5, 7.6
+  const handleApplyFilters = useCallback(
+    (newFilters: SearchFilters) => {
+      setFilters(newFilters);
+      setFilterModalVisible(false);
+      if (query.length >= 2) {
+        performSearch(query, newFilters, 0);
+      }
+    },
+    [query, performSearch]
+  );
+
+  // Tap recent search
+  const handleRecentSearchTap = useCallback(
+    (term: string) => {
+      setQuery(term);
+      performSearch(term, filters, 0);
+    },
+    [filters, performSearch]
+  );
+
+  // Clear search history
+  const handleClearHistory = useCallback(async () => {
+    try {
+      await searchService.clearSearchHistory();
+      setRecentSearches([]);
+    } catch (error) {
+      console.error('Failed to clear history:', error);
+    }
+  }, [searchService]);
+
+  // Navigate to book at highlight position - Req 7.4
+  const handleResultTap = useCallback(
+    (result: SearchResult) => {
+      navigation.navigate('Reader', {
+        bookId: result.highlight.bookId,
+        highlightId: result.highlight.id,
+      });
+    },
+    [navigation]
+  );
+
+  const activeFilterCount = Object.keys(filters).length;
+
+  // ---------------------------------------------------------------------------
+  // Render helpers
+  // ---------------------------------------------------------------------------
+
+  const renderRecentSearches = () => {
+    if (query.length >= 2 || recentSearches.length === 0) return null;
+    return (
+      <View style={styles.recentContainer}>
+        <View style={styles.recentHeader}>
+          <Text style={styles.recentTitle}>Recent</Text>
+          <TouchableOpacity onPress={handleClearHistory}>
+            <Text style={styles.clearHistoryText}>CLEAR</Text>
+          </TouchableOpacity>
+        </View>
+        {recentSearches.map(term => (
+          <TouchableOpacity
+            key={term}
+            style={styles.recentItem}
+            onPress={() => handleRecentSearchTap(term)}
+          >
+            <Text style={styles.recentIcon}>↳</Text>
+            <Text style={styles.recentText}>{term}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
+  const renderResultItem = useCallback(
+    ({ item }: { item: SearchResult }) => {
+      const { highlight, book, matchedText, matchType } = item;
+      const chapter = highlight.position.chapterTitle;
+
+      return (
+        <TouchableOpacity
+          style={styles.resultCard}
+          onPress={() => handleResultTap(item)}
+          activeOpacity={0.7}
+        >
+          {/* Color bar */}
+          <View style={[styles.colorBar, { backgroundColor: highlight.color }]} />
+
+          <View style={styles.resultContent}>
+            {/* Book title + chapter - Req 7.4 */}
+            <View style={styles.resultMeta}>
+              <Text style={styles.bookTitle} numberOfLines={1}>
+                {book.title}
+              </Text>
+              {chapter ? (
+                <Text style={styles.chapterTitle} numberOfLines={1}>
+                  {' · '}
+                  {chapter}
+                </Text>
+              ) : null}
+            </View>
+
+            {/* Highlight preview with matched text highlighted - Req 7.4 */}
+            <HighlightedText
+              text={matchType === 'text' ? matchedText : highlight.text}
+              query={query}
+              style={styles.highlightPreview}
+              numberOfLines={3}
+            />
+
+            {/* Note preview if match is in note */}
+            {matchType === 'note' && highlight.note ? (
+              <HighlightedText
+                text={highlight.note}
+                query={query}
+                style={styles.notePreview}
+                numberOfLines={2}
+              />
+            ) : null}
+
+            {/* Tag match indicator */}
+            {matchType === 'tag' && (
+              <View style={styles.tagMatchRow}>
+                <Text style={styles.tagMatchLabel}>Tag: </Text>
+                <HighlightedText
+                  text={item.matchedText}
+                  query={query}
+                  style={styles.tagMatchText}
+                />
+              </View>
+            )}
+
+            {/* Tags */}
+            {highlight.tags.length > 0 && (
+              <View style={styles.tagRow}>
+                {highlight.tags.slice(0, 4).map(tag => (
+                  <View key={tag.id} style={styles.tag}>
+                    <Text style={styles.tagText}>{tag.name}</Text>
+                  </View>
+                ))}
+                {highlight.tags.length > 4 && (
+                  <Text style={styles.moreTagsText}>+{highlight.tags.length - 4}</Text>
+                )}
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
+      );
+    },
+    [query, handleResultTap]
+  );
+
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={styles.footerLoader}>
+        <ActivityIndicator size="small" color={palette.ink} />
+      </View>
+    );
+  };
+
+  const renderEmpty = () => {
+    if (loading) return null;
+    if (query.length < 2) return null;
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyTitle}>No Results</Text>
+        <Text style={styles.emptyText}>
+          No highlights found for "{query}"
+          {activeFilterCount > 0 ? ' with the current filters' : ''}
+        </Text>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <Masthead title="Search" />
+
+      {/* Search bar */}
+      <View style={styles.searchBar}>
+        <View style={styles.inputWrapper}>
+          <Text style={styles.searchIcon}>⌕</Text>
+          <TextInput
+            style={styles.searchInput}
+            value={query}
+            onChangeText={handleQueryChange}
+            placeholder="Search every passage…"
+            placeholderTextColor={palette.inkFaint}
+            returnKeyType="search"
+            autoCorrect={false}
+            autoCapitalize="none"
+            clearButtonMode="while-editing"
+          />
+        </View>
+        {/* Filter button - Req 7.5 */}
+        <TouchableOpacity
+          style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
+          onPress={() => setFilterModalVisible(true)}
+        >
+          <Text style={[styles.filterBtnText, activeFilterCount > 0 && styles.filterBtnTextActive]}>
+            {activeFilterCount > 0 ? `FILTER ${activeFilterCount}` : 'FILTER'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Loading indicator */}
+      {loading && (
+        <View style={styles.loadingRow}>
+          <ActivityIndicator size="small" color={palette.ink} />
+        </View>
+      )}
+
+      {/* Recent searches (shown when no query) */}
+      {renderRecentSearches()}
+
+      {/* Results list */}
+      {query.length >= 2 && !loading && (
+        <FlatList
+          data={results}
+          keyExtractor={item => item.highlight.id}
+          renderItem={renderResultItem}
+          ListEmptyComponent={renderEmpty}
+          ListFooterComponent={renderFooter}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.3}
+          contentContainerStyle={styles.listContent}
+          keyboardShouldPersistTaps="handled"
+        />
+      )}
+
+      {/* Filter modal */}
+      <FilterModal
+        visible={filterModalVisible}
+        books={allBooks}
+        allTags={allTags}
+        filters={filters}
+        onApply={handleApplyFilters}
+        onClose={() => setFilterModalVisible(false)}
+      />
+    </View>
+  );
+}
