@@ -600,3 +600,356 @@ export default function SearchScreen({ navigation }: Props) {
     </View>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+const useStyles = makeStyles(palette => ({
+  container: {
+    backgroundColor: palette.paper,
+    flex: 1,
+  },
+
+  // Search bar
+  searchBar: {
+    alignItems: 'center',
+    backgroundColor: palette.paper,
+    borderBottomColor: palette.line,
+    borderBottomWidth: border.hair,
+    flexDirection: 'row',
+    gap: space.sm,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+  },
+  inputWrapper: {
+    alignItems: 'center',
+    backgroundColor: palette.card,
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    flex: 1,
+    flexDirection: 'row',
+    paddingHorizontal: space.md,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 4,
+  },
+  searchIcon: {
+    color: palette.ink,
+    fontSize: 20,
+    marginRight: space.sm,
+  },
+  searchInput: {
+    ...typo.body,
+    color: palette.ink,
+    flex: 1,
+  },
+  filterBtn: {
+    backgroundColor: palette.paper,
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    paddingHorizontal: space.md,
+    paddingVertical: space.md,
+  },
+  filterBtnActive: {
+    backgroundColor: palette.ink,
+    borderColor: palette.ink,
+  },
+  filterBtnText: {
+    ...typo.data,
+    color: palette.ink,
+    fontSize: 11,
+  },
+  filterBtnTextActive: {
+    color: palette.paper,
+  },
+
+  // Loading
+  loadingRow: {
+    alignItems: 'center',
+    paddingVertical: space.lg,
+  },
+
+  // Recent searches
+  recentContainer: {
+    backgroundColor: palette.card,
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    marginHorizontal: space.lg,
+    marginTop: space.md,
+    overflow: 'hidden',
+  },
+  recentHeader: {
+    alignItems: 'center',
+    backgroundColor: palette.ink,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+  },
+  recentTitle: {
+    ...typo.eyebrow,
+    color: palette.paper,
+  },
+  clearHistoryText: {
+    ...typo.label,
+    color: palette.marker,
+  },
+  recentItem: {
+    alignItems: 'center',
+    borderBottomColor: palette.lineSoft,
+    borderBottomWidth: border.hair,
+    flexDirection: 'row',
+    paddingHorizontal: space.md,
+    paddingVertical: space.md,
+  },
+  recentIcon: {
+    ...typo.label,
+    color: palette.inkFaint,
+    marginRight: space.md,
+  },
+  recentText: {
+    ...typo.body,
+    color: palette.ink,
+  },
+
+  // Results list
+  listContent: {
+    flexGrow: 1,
+    paddingBottom: space.xl,
+    paddingHorizontal: space.lg,
+    paddingTop: space.md,
+  },
+
+  // Result card
+  resultCard: {
+    backgroundColor: palette.card,
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    flexDirection: 'row',
+    marginBottom: space.md,
+    overflow: 'hidden',
+  },
+  colorBar: {
+    width: 8,
+  },
+  resultContent: {
+    flex: 1,
+    padding: space.md,
+  },
+  resultMeta: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: space.sm,
+  },
+  bookTitle: {
+    ...typo.eyebrow,
+    color: palette.ink,
+    flexShrink: 1,
+  },
+  chapterTitle: {
+    ...typo.label,
+    color: palette.inkFaint,
+    flexShrink: 1,
+  },
+  highlightPreview: {
+    ...typo.quote,
+    color: palette.ink,
+    marginBottom: space.xs,
+  },
+  notePreview: {
+    ...typo.note,
+    color: palette.inkSoft,
+    marginBottom: space.xs,
+  },
+  tagMatchRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: space.xs,
+  },
+  tagMatchLabel: {
+    ...typo.label,
+    color: palette.inkFaint,
+  },
+  tagMatchText: {
+    ...typo.label,
+    color: palette.inkSoft,
+  },
+  matchHighlight: {
+    // The matched query gets the marker swipe — a real, semantic highlight.
+    backgroundColor: palette.marker,
+    color: palette.ink,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.xs,
+    marginTop: space.xs,
+  },
+  tag: {
+    borderColor: palette.lineSoft,
+    borderWidth: border.hair,
+    paddingHorizontal: space.sm,
+    paddingVertical: 2,
+  },
+  tagText: {
+    ...typo.label,
+    color: palette.inkSoft,
+    fontSize: 11,
+  },
+  moreTagsText: {
+    ...typo.label,
+    alignSelf: 'center',
+    color: palette.inkFaint,
+  },
+
+  // Empty state
+  emptyContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: space.xxl,
+    paddingTop: 60,
+  },
+  emptyTitle: {
+    ...typo.heading,
+    color: palette.ink,
+    marginBottom: space.sm,
+  },
+  emptyText: {
+    ...typo.body,
+    color: palette.inkSoft,
+    textAlign: 'center',
+  },
+
+  // Footer loader
+  footerLoader: {
+    alignItems: 'center',
+    paddingVertical: space.lg,
+  },
+
+  // Filter modal
+  modalOverlay: {
+    backgroundColor: 'rgba(23,24,28,0.55)',
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: palette.paper,
+    borderColor: palette.line,
+    borderTopWidth: border.bold,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    alignItems: 'center',
+    borderBottomColor: palette.line,
+    borderBottomWidth: border.bold,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: space.lg,
+    paddingVertical: space.lg,
+  },
+  modalTitle: {
+    ...typo.heading,
+    color: palette.ink,
+  },
+  modalCloseBtn: {
+    padding: space.xs,
+  },
+  modalCloseBtnText: {
+    color: palette.ink,
+    fontSize: 18,
+  },
+  modalBody: {
+    paddingHorizontal: space.lg,
+    paddingTop: space.md,
+  },
+  filterSectionLabel: {
+    ...typo.eyebrow,
+    color: palette.inkSoft,
+    marginBottom: space.sm,
+    marginTop: space.md,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    marginBottom: space.xs,
+  },
+  tagGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.sm,
+    marginBottom: space.xs,
+  },
+  chip: {
+    backgroundColor: palette.paper,
+    borderColor: palette.line,
+    borderWidth: border.hair,
+    marginBottom: space.xs,
+    marginRight: space.sm,
+    maxWidth: 180,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+  },
+  chipActive: {
+    backgroundColor: palette.ink,
+    borderColor: palette.ink,
+  },
+  chipText: {
+    ...typo.label,
+    color: palette.inkSoft,
+  },
+  chipTextActive: {
+    color: palette.paper,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    gap: space.md,
+    marginBottom: space.lg,
+  },
+  dateField: {
+    flex: 1,
+  },
+  dateLabel: {
+    ...typo.label,
+    color: palette.inkSoft,
+    marginBottom: space.xs,
+  },
+  dateInput: {
+    ...typo.body,
+    backgroundColor: palette.card,
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    color: palette.ink,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+  },
+  modalFooter: {
+    borderTopColor: palette.line,
+    borderTopWidth: border.bold,
+    flexDirection: 'row',
+    gap: space.md,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.lg,
+  },
+  clearBtn: {
+    alignItems: 'center',
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    flex: 1,
+    paddingVertical: space.md,
+  },
+  clearBtnText: {
+    ...typo.data,
+    color: palette.ink,
+  },
+  applyBtn: {
+    alignItems: 'center',
+    backgroundColor: palette.pop,
+    borderColor: palette.ink,
+    borderWidth: border.rule,
+    flex: 2,
+    paddingVertical: space.md,
+  },
+  applyBtnText: {
+    ...typo.data,
+    color: palette.popText,
+  },
+}));
