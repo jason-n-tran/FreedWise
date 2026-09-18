@@ -528,3 +528,330 @@ interface TimePickerModalProps {
   onConfirm: () => void;
   onCancel: () => void;
 }
+
+function TimePickerModal({
+  visible,
+  hour,
+  minute,
+  onChangeHour,
+  onChangeMinute,
+  onConfirm,
+  onCancel,
+}: TimePickerModalProps) {
+  const styles = useStyles();
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onCancel}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Set Reminder Time</Text>
+
+          <View style={styles.pickerRow}>
+            {/* Hour column */}
+            <View style={styles.pickerColumn}>
+              <Text style={styles.pickerColumnLabel}>Hour</Text>
+              <FlatList
+                data={HOURS}
+                keyExtractor={item => String(item)}
+                style={styles.pickerList}
+                showsVerticalScrollIndicator={false}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[styles.pickerItem, item === hour && styles.pickerItemSelected]}
+                    onPress={() => onChangeHour(item)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.pickerItemText,
+                        item === hour && styles.pickerItemTextSelected,
+                      ]}
+                    >
+                      {pad(item)}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+
+            <Text style={styles.pickerColon}>:</Text>
+
+            {/* Minute column */}
+            <View style={styles.pickerColumn}>
+              <Text style={styles.pickerColumnLabel}>Min</Text>
+              <FlatList
+                data={MINUTES}
+                keyExtractor={item => String(item)}
+                style={styles.pickerList}
+                showsVerticalScrollIndicator={false}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={[styles.pickerItem, item === minute && styles.pickerItemSelected]}
+                    onPress={() => onChangeMinute(item)}
+                    activeOpacity={0.7}
+                  >
+                    <Text
+                      style={[
+                        styles.pickerItemText,
+                        item === minute && styles.pickerItemTextSelected,
+                      ]}
+                    >
+                      {pad(item)}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              />
+            </View>
+          </View>
+
+          <Text style={styles.previewTime}>
+            {pad(hour)}:{pad(minute)}
+          </Text>
+
+          <View style={styles.modalButtons}>
+            <TouchableOpacity style={styles.modalCancelBtn} onPress={onCancel} activeOpacity={0.7}>
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.modalConfirmBtn}
+              onPress={onConfirm}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.modalConfirmText}>Confirm</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const useStyles = makeStyles(palette => ({
+  screen: {
+    backgroundColor: palette.paper,
+    flex: 1,
+  },
+  container: {
+    backgroundColor: palette.paper,
+    flex: 1,
+  },
+  content: {
+    paddingBottom: 40,
+  },
+  centered: {
+    alignItems: 'center',
+    backgroundColor: palette.paper,
+    flex: 1,
+    justifyContent: 'center',
+  },
+  rowColumn: {
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+  },
+  segment: {
+    flexDirection: 'row',
+    marginTop: space.md,
+    borderWidth: border.rule,
+    borderColor: palette.line,
+  },
+  segmentItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: space.sm,
+    backgroundColor: palette.paper,
+  },
+  segmentItemActive: {
+    backgroundColor: palette.ink,
+  },
+  segmentText: {
+    ...typo.label,
+    color: palette.inkSoft,
+  },
+  segmentTextActive: {
+    color: palette.paper,
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  stepperButton: {
+    width: 34,
+    height: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: border.rule,
+    borderColor: palette.line,
+  },
+  stepperButtonText: {
+    ...typo.title,
+    color: palette.ink,
+  },
+  stepperValue: {
+    ...typo.data,
+    color: palette.ink,
+    minWidth: 52,
+    textAlign: 'center',
+  },
+  loadingText: {
+    ...typo.eyebrow,
+    color: palette.inkSoft,
+  },
+  sectionHeader: {
+    ...typo.eyebrow,
+    color: palette.inkSoft,
+    marginBottom: space.sm,
+    marginHorizontal: space.lg,
+    marginTop: space.xl,
+  },
+  card: {
+    backgroundColor: palette.card,
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    marginHorizontal: space.lg,
+    overflow: 'hidden',
+  },
+  row: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    minHeight: 54,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+  },
+  rowLeft: {
+    flex: 1,
+    marginRight: space.md,
+  },
+  rowLabel: {
+    ...typo.bodyStrong,
+    color: palette.ink,
+  },
+  rowDescription: {
+    ...typo.label,
+    color: palette.inkSoft,
+    marginTop: 2,
+  },
+  rowValue: {
+    ...typo.data,
+    color: palette.inkSoft,
+  },
+  timeValue: {
+    ...typo.readout,
+    color: palette.ink,
+    fontSize: 18,
+  },
+  comingSoon: {
+    ...typo.label,
+    color: palette.inkFaint,
+  },
+  dangerLabel: {
+    ...typo.bodyStrong,
+    color: palette.danger,
+  },
+  separator: {
+    backgroundColor: palette.lineSoft,
+    height: border.hair,
+    marginLeft: space.lg,
+  },
+  permissionWarning: {
+    ...typo.label,
+    color: palette.warn,
+    lineHeight: 18,
+    marginBottom: space.md,
+    marginHorizontal: space.lg,
+  },
+  // Modal styles
+  modalOverlay: {
+    backgroundColor: 'rgba(23,24,28,0.55)',
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: palette.paper,
+    borderColor: palette.line,
+    borderTopWidth: border.bold,
+    paddingBottom: 40,
+    paddingHorizontal: space.xl,
+    paddingTop: space.xl,
+  },
+  modalTitle: {
+    ...typo.eyebrow,
+    color: palette.inkSoft,
+    marginBottom: space.xl,
+    textAlign: 'center',
+  },
+  pickerRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  pickerColumn: {
+    alignItems: 'center',
+    width: 80,
+  },
+  pickerColumnLabel: {
+    ...typo.eyebrow,
+    color: palette.inkFaint,
+    marginBottom: space.sm,
+  },
+  pickerList: {
+    height: 180,
+  },
+  pickerItem: {
+    alignItems: 'center',
+    marginVertical: 2,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
+  },
+  pickerItemSelected: {
+    backgroundColor: palette.marker,
+  },
+  pickerItemText: {
+    ...typo.data,
+    color: palette.inkSoft,
+    fontSize: 20,
+  },
+  pickerItemTextSelected: {
+    color: palette.ink,
+  },
+  pickerColon: {
+    ...typo.readout,
+    color: palette.ink,
+    fontSize: 28,
+    marginHorizontal: space.sm,
+    marginTop: 20,
+  },
+  previewTime: {
+    ...typo.readout,
+    color: palette.ink,
+    marginVertical: space.lg,
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: space.md,
+    marginTop: space.sm,
+  },
+  modalCancelBtn: {
+    alignItems: 'center',
+    borderColor: palette.line,
+    borderWidth: border.rule,
+    flex: 1,
+    paddingVertical: space.md,
+  },
+  modalCancelText: {
+    ...typo.data,
+    color: palette.ink,
+  },
+  modalConfirmBtn: {
+    alignItems: 'center',
+    backgroundColor: palette.pop,
+    borderColor: palette.ink,
+    borderWidth: border.rule,
+    flex: 1,
+    paddingVertical: space.md,
+  },
+  modalConfirmText: {
+    ...typo.data,
+    color: palette.popText,
+  },
+}));
