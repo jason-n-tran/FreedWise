@@ -453,3 +453,5 @@ const WebViewReader = forwardRef<WebViewReaderRef, WebViewReaderProps>(
     );
   }
 );
+
+export default WebViewReader;
