@@ -455,3 +455,71 @@ const WebViewReader = forwardRef<WebViewReaderRef, WebViewReaderProps>(
 );
 
 export default WebViewReader;
+
+const useStyles = makeStyles(palette => ({
+  center: {
+    alignItems: 'center',
+    backgroundColor: palette.paper,
+    flex: 1,
+    justifyContent: 'center',
+    padding: space.xl,
+  },
+  container: { backgroundColor: palette.paper, flex: 1 },
+  errorText: { ...typo.body, color: palette.danger, textAlign: 'center' },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    backgroundColor: palette.paper,
+    justifyContent: 'center',
+  },
+  loadingText: { ...typo.eyebrow, color: palette.inkSoft, marginTop: space.md },
+  webview: { backgroundColor: palette.paper, flex: 1 },
+  // Transparent edge tap targets for page flipping. 15% of width each, leaving
+  // the center 70% free for text selection / reading.
+  flipZoneLeft: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: '15%',
+  },
+  flipZoneRight: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: '15%',
+  },
+  swipeIndicatorLeft: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: 60,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    paddingLeft: 12,
+    pointerEvents: 'none',
+  },
+  swipeIndicatorRight: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: 60,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingRight: 12,
+    pointerEvents: 'none',
+  },
+  swipeArrow: {
+    fontSize: 48,
+    color: palette.inkSoft,
+    opacity: 0.6,
+    fontWeight: '300',
+  },
+}));
