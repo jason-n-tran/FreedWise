@@ -2,6 +2,7 @@
 
 # FreedWise
 
+[![Watch: Demo](https://img.shields.io/badge/Watch-Demo-green.svg)](https://youtu.be/fpMDcG0V8UM)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![React Native](https://img.shields.io/badge/React_Native-0.83-61DAFB?logo=react&logoColor=black)](https://reactnative.dev/)
@@ -13,7 +14,7 @@ A free, offline-first mobile reading app that turns the books you already own in
 
 ## Visuals
 
-![App Screenshot](path/to/screenshot.png)
+![App Screenshot](Screenshot.png)
 
 <!--
 Best screenshot: the Library grid with a few imported book covers, plus a second
